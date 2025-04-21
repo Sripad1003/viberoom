@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VibeRoom</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🎶 Join a VibeRoom</h1>
+    <form id="joinForm" class="join-form">
+      <input type="text" id="username" placeholder="Your Name" required />
+      <input type="text" id="room" placeholder="Room Name" required />
+      <button type="submit">Join</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('joinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const room = document.getElementById('room').value;
+
+      window.location.href = `/room.html?username=${username}&room=${room}`;
+    });
+  </script>
+</body>
+</html>

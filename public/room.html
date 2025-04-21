@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>VibeRoom</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="container">
+    <h1>🎧 Welcome to VibeRoom</h1>
+
+    <section class="video-controls">
+      <button onclick="playSong()" style="display:none;">Play</button>
+      <button onclick="pauseSong()" style="display:none;">Pause</button>
+      <button onclick="playPrevious()" style="display:none;">Previous</button>
+      <button onclick="playNext()" style="display:none;">Next</button>
+    </section>
+
+    <section class="video-search-queue-container">
+      <div class="video-player-container">
+        <div id="ytplayer"></div>
+      </div>
+
+      <div class="divider" id="divider"></div>
+      <div class="video-queue-container">
+        <input type="text" id="youtubeSearchInput" placeholder="Search YouTube videos..."
+          style="width: 100%; height: 40px; font-size: 16px; padding: 5px;" />
+        <ul id="youtubeResults"></ul>
+      </div>
+    </section>
+    <hr />
+    <section class="voice-chat">
+      <h2>🎤 Voice Chat</h2>
+      <button onclick="startCall()">Start Call</button>
+      <button onclick="endCall()">End Call</button>
+      <audio id="remoteAudio" autoplay></audio>
+    </section>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="client.js"></script>
+</body>
+
+</html>
