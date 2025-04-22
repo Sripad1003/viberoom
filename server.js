@@ -41,7 +41,8 @@ app.get('/api/youtube/search', async (req, res) => {
 // ------------------------
 // Room Management
 // ------------------------
-const rooms = {}; // { roomId: { users: [], currentVideo: '' } }
+
+const rooms = {}; // { roomId: { users: [], queue: [], currentVideoIndex: 0 } }
 
 io.on('connection', (socket) => {
   console.log('[Server] A user connected');
@@ -53,31 +54,50 @@ io.on('connection', (socket) => {
     socket.room = room;
     socket.username = username;
 
-    if (!rooms[room]) rooms[room] = { users: [], currentVideo: null };
+    if (!rooms[room]) rooms[room] = { users: [], queue: [], currentVideoIndex: 0 };
     rooms[room].users.push(username);
 
     console.log(`[${username}] joined room: ${room}`);
 
+    // Send current queue and current video index to the new user
+    socket.emit('queue-update', {
+      queue: rooms[room].queue,
+      currentVideoIndex: rooms[room].currentVideoIndex
+    });
+
     // Ask others to send sync data to the new user
     socket.to(room).emit('sync-request');
-
-    // Send current video if exists
-    if (rooms[room].currentVideo) {
-      socket.emit('video-change', {
-        videoId: rooms[room].currentVideo,
-        username: 'System'
-      });
-    }
   });
+
+  socket.on('queue-update', ({ room, queue, currentVideoIndex }) => {
+    if (!room || !queue || currentVideoIndex == null) return;
+  
+    if (!rooms[room]) {
+      rooms[room] = { users: [], queue: [], currentVideoIndex: 0 };
+    }
+    rooms[room].queue = queue;
+    rooms[room].currentVideoIndex = currentVideoIndex;
+  
+    io.in(room).emit('queue-update', { queue, currentVideoIndex });
+  });
+  
 
   socket.on('video-change', ({ room, videoId, username }) => {
     if (!room || !videoId || !username) return;
 
     if (!rooms[room]) {
-      rooms[room] = { users: [], currentVideo: null };
+      rooms[room] = { users: [], queue: [], currentVideoIndex: 0 };
     }
-    rooms[room].currentVideo = videoId;
-    socket.to(room).emit('video-change', { videoId, username });
+    // Update currentVideoIndex based on videoId in queue
+    const index = rooms[room].queue.findIndex(v => v.videoId === videoId);
+    if (index !== -1) {
+      rooms[room].currentVideoIndex = index;
+      // Broadcast updated queue and currentVideoIndex to all clients including sender
+      io.in(room).emit('queue-update', {
+        queue: rooms[room].queue,
+        currentVideoIndex: rooms[room].currentVideoIndex
+      });
+    }
   });
 
   socket.on('play', ({ room, time, username }) => {

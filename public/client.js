@@ -2,6 +2,8 @@ let player;
 let localStream;
 let peerConnection;
 let isSyncing = false;
+let autoPlayEnabled = false;
+
 const config = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -12,6 +14,31 @@ const config = {
     }
   ]
 };
+
+// Dynamically add Auto Play toggle button to UI
+window.addEventListener('DOMContentLoaded', () => {
+  const container = document.querySelector('.container');
+  if (container) {
+    const label = document.createElement('label');
+    label.style.display = 'block';
+    label.style.margin = '10px 0';
+    label.style.fontWeight = 'bold';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'autoPlayToggle';
+
+    checkbox.addEventListener('change', (e) => {
+      autoPlayEnabled = e.target.checked;
+      console.log(`Auto Play is now ${autoPlayEnabled ? 'enabled' : 'disabled'}`);
+    });
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(' Auto Play'));
+
+    container.insertBefore(label, container.firstChild);
+  }
+});
 
 // Get room and username from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -24,7 +51,7 @@ if (room && username) {
   socket.emit('join-room', { room, username });
 }
 
-// Video queue and current index
+
 let videoQueue = [];
 let currentVideoIndex = -1;
 
@@ -94,24 +121,25 @@ youtubeSearchInput.addEventListener('keydown', (e) => {
   }
 });
 
+
 async function performSearch(query) {
   try {
     const response = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}`);
     const data = await response.json();
 
     if (data.items && data.items.length > 0) {
-      videoQueue = [];
+      // Instead of replacing the queue, emit the new queue to the server
+      const newQueue = [];
       data.items.forEach(item => {
         const videoId = item.id.videoId;
         const title = item.snippet.title;
         const thumbnail = item.snippet.thumbnails.default.url;
-        if (!videoQueue.find(v => v.videoId === videoId)) {
-          videoQueue.push({ videoId, title, thumbnail });
+        if (!newQueue.find(v => v.videoId === videoId)) {
+          newQueue.push({ videoId, title, thumbnail });
         }
       });
-      currentVideoIndex = 0;
-      updateQueueUI();
-      playVideoAtIndex(currentVideoIndex);
+      // Emit queue update to server with new queue and reset currentVideoIndex to 0
+      socket.emit('queue-update', { room, queue: newQueue, currentVideoIndex: 0 });
     } else {
       const resultsList = document.getElementById('youtubeResults');
       resultsList.innerHTML = '<li>No YouTube videos found</li>';
@@ -122,6 +150,27 @@ async function performSearch(query) {
   }
 }
 
+// Listen for queue updates from server
+socket.on('queue-update', ({ queue, currentVideoIndex: newIndex }) => {
+  videoQueue = queue;
+  currentVideoIndex = newIndex;
+  updateQueueUI();
+  playVideoAtIndex(currentVideoIndex, true); // Sync playback
+});
+
+
+// Listen for video change events from server
+socket.on('video-change', ({ videoId, username: sender }) => {
+  if (sender !== username) {
+    const index = videoQueue.findIndex(v => v.videoId === videoId);
+    if (index !== -1 && index !== currentVideoIndex) {
+      currentVideoIndex = index;
+      playVideoAtIndex(currentVideoIndex);
+      console.log(`[${username}] Synced video change from ${sender} to videoId ${videoId}`);
+    }
+  }
+});
+
 function addVideoToQueue(videoId) {
   if (!videoQueue.includes(videoId)) {
     videoQueue.push(videoId);
@@ -130,32 +179,24 @@ function addVideoToQueue(videoId) {
   }
 }
 
-function playVideoAtIndex(index) {
+function playVideoAtIndex(index, autoplay = true) {
   if (index < 0 || index >= videoQueue.length) return;
   currentVideoIndex = index;
-  const videoId = videoQueue[index];
+  const videoId = videoQueue[index].videoId;
   if (player) {
     player.loadVideoById(videoId);
-    player.playVideo();
+    if (autoplay) {
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
     player.setVolume(document.getElementById('volumeSlider').value);
   } else {
     onYouTubeIframeAPIReady(videoId);
   }
   updateQueueUI();
   updateControlButtons();
-  socket.emit('video-change', { room, videoId, username });
-}
-
-function playNext() {
-  if (currentVideoIndex + 1 < videoQueue.length) {
-    playVideoAtIndex(currentVideoIndex + 1);
-  }
-}
-
-function playPrevious() {
-  if (currentVideoIndex - 1 >= 0) {
-    playVideoAtIndex(currentVideoIndex - 1);
-  }
+  // Removed socket.emit('video-change') to unify state management
 }
 
 function updateQueueUI() {
@@ -183,10 +224,47 @@ function updateQueueUI() {
     li.appendChild(img);
     li.appendChild(span);
 
-    li.onclick = () => playVideoAtIndex(index);
+    // 🔁 This emits to everyone in the room to sync the clicked video
+    li.onclick = () => {
+      socket.emit('queue-update', {
+        room,
+        queue: videoQueue,
+        currentVideoIndex: index
+      });
+    };
+
     resultsList.appendChild(li);
   });
 }
+
+
+function playNext() {
+  if (currentVideoIndex + 1 < videoQueue.length) {
+    currentVideoIndex = currentVideoIndex + 1;
+    socket.emit('queue-update', { room, queue: videoQueue, currentVideoIndex });
+  }
+}
+
+// Add YouTube player error handling to skip unavailable videos
+function onPlayerError(event) {
+  console.warn(`YouTube Player Error: ${event.data}`);
+  // Error codes: 2, 5, 100, 101, 150
+  // Skip to next video on error
+  if (currentVideoIndex + 1 < videoQueue.length) {
+    currentVideoIndex = currentVideoIndex + 1;
+    socket.emit('queue-update', { room, queue: videoQueue, currentVideoIndex });
+  } else {
+    console.log('No more videos to skip to.');
+  }
+}
+
+function playPrevious() {
+  if (currentVideoIndex - 1 >= 0) {
+    currentVideoIndex = currentVideoIndex - 1;
+    socket.emit('queue-update', { room, queue: videoQueue, currentVideoIndex });
+  }
+}
+
 
 // --- YOUTUBE API SETUP ---
 function onYouTubeIframeAPIReady(videoId) {
@@ -262,6 +340,8 @@ function pauseSong() {
   socket.emit('pause', { room, username, time: currentTime });
 }
 
+let lastSentTime = 0;
+
 // Custom Player State Change Handler
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
@@ -271,6 +351,12 @@ function onPlayerStateChange(event) {
     if (diff > 1.0) {
       socket.emit('seek', { room, username, time: currentTime });
       lastSentTime = currentTime;
+    }
+  } else if (event.data === YT.PlayerState.ENDED) {
+    // Auto play next video if enabled
+    if (autoPlayEnabled && currentVideoIndex + 1 < videoQueue.length) {
+      currentVideoIndex = currentVideoIndex + 1;
+      socket.emit('queue-update', { room, queue: videoQueue, currentVideoIndex });
     }
   }
 }
