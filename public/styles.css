@@ -15,6 +15,7 @@ html, body {
     width: 100vw;
     padding: 10px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .video-search-queue-container {
@@ -24,6 +25,175 @@ html, body {
     overflow: hidden;
     height: 100%;
     position: relative;
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+    .container {
+        height: auto;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .top-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .video-controls, .voice-chat {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .voice-chat h2 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .video-search-queue-container {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .video-player-container, .video-queue-container {
+        flex-basis: auto;
+        height: auto;
+        width: 100%;
+    }
+
+    .divider {
+        display: none;
+    }
+}
+
+/* Tablet styles */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .container {
+        padding: 15px;
+    }
+
+    .top-controls {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .video-controls, .voice-chat {
+        width: auto;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .voice-chat h2 {
+        font-size: 1.1rem;
+    }
+
+    .video-search-queue-container {
+        flex-direction: row;
+        height: auto;
+        overflow: visible;
+    }
+
+    .video-player-container {
+        flex-basis: 60%;
+        height: auto;
+    }
+
+    .video-queue-container {
+        flex-basis: 40%;
+        height: auto;
+    }
+
+    .divider {
+        display: block;
+        height: auto;
+    }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+    .container {
+        padding: 20px 40px;
+    }
+
+    .top-controls {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .video-controls, .voice-chat {
+        width: auto;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .voice-chat h2 {
+        font-size: 1.2rem;
+    }
+
+    .video-search-queue-container {
+        flex-direction: row;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .video-player-container {
+        flex-basis: 70%;
+        height: 100%;
+    }
+
+    .video-queue-container {
+        flex-basis: 30%;
+        height: 100%;
+    }
+
+    .divider {
+        display: block;
+        height: 100%;
+    }
+}
+
+/* General improvements */
+button {
+    font-size: 1rem;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+input[type="text"] {
+    font-size: 1rem;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
 }
 
 .video-player-container {

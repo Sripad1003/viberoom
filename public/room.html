@@ -3,6 +3,7 @@
 
 <head>
   <title>VibeRoom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -10,11 +11,19 @@
   <div class="container">
     <h1>🎧 Welcome to VibeRoom</h1>
 
-    <section class="video-controls">
-      <button onclick="playSong()" style="display:none;">Play</button>
-      <button onclick="pauseSong()" style="display:none;">Pause</button>
-      <button onclick="playPrevious()" style="display:none;">Previous</button>
-      <button onclick="playNext()" style="display:none;">Next</button>
+    <section class="top-controls">
+      <div class="video-controls">
+        <button onclick="playSong()" style="display:none;">Play</button>
+        <button onclick="pauseSong()" style="display:none;">Pause</button>
+        <button onclick="playPrevious()" style="display:none;">Previous</button>
+        <button onclick="playNext()" style="display:none;">Next</button>
+      </div>
+      <div class="voice-chat">
+        <h2>🎤 Voice Chat</h2>
+        <button onclick="startCall()">Start Call</button>
+        <button onclick="endCall()">End Call</button>
+        <audio id="remoteAudio" autoplay></audio>
+      </div>
     </section>
 
     <section class="video-search-queue-container">
@@ -30,12 +39,7 @@
       </div>
     </section>
     <hr />
-    <section class="voice-chat">
-      <h2>🎤 Voice Chat</h2>
-      <button onclick="startCall()">Start Call</button>
-      <button onclick="endCall()">End Call</button>
-      <audio id="remoteAudio" autoplay></audio>
-    </section>
+    
   </div>
 
   <!-- Scripts -->

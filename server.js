@@ -11,9 +11,6 @@ const io = socketIo(server);
 
 const port = process.env.PORT || 3000;
 
-
-
-app.use('/api/spotify', spotifyRoutes);
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 

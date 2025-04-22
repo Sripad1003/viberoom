@@ -20,6 +20,10 @@ const room = urlParams.get('room');
 
 const socket = io();
 
+if (room && username) {
+  socket.emit('join-room', { room, username });
+}
+
 // Video queue and current index
 let videoQueue = [];
 let currentVideoIndex = -1;
@@ -338,6 +342,7 @@ async function startCall() {
     console.log(`[${username}] Sent offer`);
   } catch (err) {
     console.error(`[${username}] Error in startCall:`, err);
+    alert('Error starting voice call: ' + err.message + '. Please check microphone permissions and try again.');
   }
 }
 
