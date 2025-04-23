@@ -1,27 +1,118 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>VibeRoom</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>🎶 Join a VibeRoom</h1>
-    <form id="joinForm" class="join-form">
-      <input type="text" id="username" placeholder="Your Name" required />
-      <input type="text" id="room" placeholder="Room Name" required />
-      <button type="submit">Join</button>
-    </form>
-  </div>
+<html lang="en">
+  <head>
+    <title>VibeRoom - Share Music Together</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    />
+  </head>
+  <body>
+    <div class="landing-container">
+      <div class="landing-content">
+        <div class="logo-container">
+          <div class="logo">
+            <span class="logo-icon">🎵</span>
+            <span class="logo-text">VibeRoom</span>
+          </div>
+          <p class="tagline">Share the music vibe, together.</p>
+        </div>
 
-  <script>
-    document.getElementById('joinForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const username = document.getElementById('username').value;
-      const room = document.getElementById('room').value;
+        <div class="join-card">
+          <h2>Join a Room</h2>
+          <form id="joinForm" class="join-form">
+            <div class="form-group">
+              <label for="username">Your Name</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter your name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="room">Room Name</label>
+              <input
+                type="text"
+                id="room"
+                placeholder="Enter room name"
+                required
+              />
+            </div>
+            <button type="submit" class="primary-button">
+              <span class="button-icon">🎧</span>
+              <span>Join Room</span>
+            </button>
+          </form>
 
-      window.location.href = `/room.html?username=${username}&room=${room}`;
-    });
-  </script>
-</body>
+          <div class="create-room">
+            <p>Or create a new room with a random name</p>
+            <button id="createRoomBtn" class="secondary-button">
+              Create Room
+            </button>
+          </div>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">🎵</div>
+            <h3>Synchronized Music</h3>
+            <p>Listen to the same songs at the exact same time</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🎤</div>
+            <h3>Voice Chat</h3>
+            <p>Talk, sing, and vibe together in real-time</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🎮</div>
+            <h3>Shared Controls</h3>
+            <p>Everyone can control the music experience</p>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>VibeRoom &copy; 2024 - Feel the music together</p>
+      </footer>
+    </div>
+
+    <script>
+      document
+        .getElementById("joinForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const username = document.getElementById("username").value.trim();
+          const room = document.getElementById("room").value.trim();
+
+          if (username && room) {
+            window.location.href = `/room.html?username=${encodeURIComponent(
+              username
+            )}&room=${encodeURIComponent(room)}`;
+          }
+        });
+
+      document
+        .getElementById("createRoomBtn")
+        .addEventListener("click", function () {
+          const username = document.getElementById("username").value.trim();
+          if (!username) {
+            alert("Please enter your name first");
+            return;
+          }
+
+          const randomRoom =
+            "room_" + Math.random().toString(36).substring(2, 8);
+          document.getElementById("room").value = randomRoom;
+
+          // Auto-submit the form
+          document
+            .getElementById("joinForm")
+            .dispatchEvent(new Event("submit"));
+        });
+    </script>
+  </body>
 </html>
