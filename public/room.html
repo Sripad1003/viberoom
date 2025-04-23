@@ -1,51 +1,366 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+  <head>
+    <title>VibeRoom - Share Music Together</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="room-container">
+      <!-- Header with room info -->
+      <header class="room-header">
+        <div class="room-info">
+          <div class="logo">
+            <span class="logo-icon">🎵</span>
+            <span class="logo-text">VibeRoom</span>
+          </div>
+          <div class="room-details">
+            <h2 id="roomName">Loading room...</h2>
+            <div class="room-status">
+              <span id="onlineCount">0</span> people vibing
+            </div>
+          </div>
+        </div>
+        <div class="user-controls">
+          <div class="user-profile">
+            <span id="userAvatar" class="user-avatar"></span>
+            <span id="userName">Loading...</span>
+          </div>
+          <button id="leaveRoomBtn" class="leave-button">
+            <i class="fas fa-sign-out-alt"></i> Leave
+          </button>
+        </div>
+      </header>
 
-<head>
-  <title>VibeRoom</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
+      <!-- Main content area -->
+      <main class="room-content">
+        <!-- Main player section -->
+        <section class="player-section">
+          <div class="video-container">
+            <div id="ytplayer"></div>
+            <div id="videoOverlay" class="video-overlay">
+              <div class="overlay-message">
+                <i class="fas fa-music fa-3x pulse"></i>
+                <p>Search and add videos to get started</p>
+              </div>
+            </div>
 
-<body>
-  <div class="container">
-    <h1>🎧 Welcome to VibeRoom</h1>
+            <!-- Video progress bar -->
+            <div class="video-progress-container">
+              <div class="video-time current-time">0:00</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-bar-fill"></div>
+                </div>
+                <div class="progress-bar-handle"></div>
+              </div>
+              <div class="video-time total-time">0:00</div>
+            </div>
 
-    <section class="top-controls">
-      <div class="video-controls">
-        <button onclick="playSong()" style="display:none;">Play</button>
-        <button onclick="pauseSong()" style="display:none;">Pause</button>
-        <button onclick="playPrevious()" style="display:none;">Previous</button>
-        <button onclick="playNext()" style="display:none;">Next</button>
-      </div>
-      <div class="voice-chat">
-        <h2>🎤 Voice Chat</h2>
-        <button onclick="startCall()">Start Call</button>
-        <button onclick="endCall()">End Call</button>
-        <audio id="remoteAudio" autoplay></audio>
-      </div>
-    </section>
+            <!-- Video controls overlay -->
+            <div class="video-controls-overlay">
+              <div class="video-top-controls">
+                <button
+                  id="theaterModeBtn"
+                  class="control-overlay-button"
+                  title="Theater Mode"
+                >
+                  <i class="fas fa-tv"></i>
+                </button>
+                <button
+                  id="fullscreenBtn"
+                  class="control-overlay-button"
+                  title="Fullscreen"
+                >
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+            </div>
+          </div>
 
-    <section class="video-search-queue-container">
-      <div class="video-player-container">
-        <div id="ytplayer"></div>
-      </div>
+          <div class="player-controls">
+            <div class="playback-controls">
+              <button
+                id="prevButton"
+                class="control-button"
+                onclick="playPrevious()"
+                title="Previous"
+              >
+                <i class="fas fa-step-backward"></i>
+              </button>
+              <button
+                id="playButton"
+                class="control-button primary"
+                onclick="playSong()"
+                title="Play"
+              >
+                <i class="fas fa-play"></i>
+              </button>
+              <button
+                id="pauseButton"
+                class="control-button primary"
+                onclick="pauseSong()"
+                title="Pause"
+              >
+                <i class="fas fa-pause"></i>
+              </button>
+              <button
+                id="nextButton"
+                class="control-button"
+                onclick="playNext()"
+                title="Next"
+              >
+                <i class="fas fa-step-forward"></i>
+              </button>
+            </div>
 
-      <div class="divider" id="divider"></div>
-      <div class="video-queue-container">
-        <input type="text" id="youtubeSearchInput" placeholder="Search YouTube videos..."
-          style="width: 100%; height: 40px; font-size: 16px; padding: 5px;" />
-        <ul id="youtubeResults"></ul>
-      </div>
-    </section>
-    <hr />
-    
-  </div>
+            <div class="volume-control">
+              <i class="fas fa-volume-down"></i>
+              <input
+                type="range"
+                id="volumeSlider"
+                min="0"
+                max="100"
+                value="50"
+                class="slider"
+              />
+              <i class="fas fa-volume-up"></i>
+            </div>
 
-  <!-- Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="client.js"></script>
-</body>
+            <div class="extra-controls">
+              <label class="toggle-container" title="Auto play next song">
+                <input type="checkbox" id="autoPlayToggle" />
+                <span class="toggle-label">Auto Play</span>
+              </label>
 
+              <div class="voice-chat-controls">
+                <button
+                  id="startCallBtn"
+                  class="voice-button"
+                  onclick="startCall()"
+                  title="Start voice chat"
+                >
+                  <i class="fas fa-microphone"></i>
+                </button>
+                <button
+                  id="endCallBtn"
+                  class="voice-button disabled"
+                  onclick="endCall()"
+                  title="End voice chat"
+                >
+                  <i class="fas fa-microphone-slash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="now-playing">
+            <div class="now-playing-info">
+              <div class="now-playing-thumbnail" id="currentThumbnail">
+                <i class="fas fa-music"></i>
+              </div>
+              <div class="now-playing-details">
+                <h3 id="currentTitle">Nothing playing</h3>
+                <div class="sync-status">
+                  <span id="syncIndicator" class="sync-indicator">
+                    <i class="fas fa-sync-alt"></i>
+                  </span>
+                  <span id="syncStatus">Synchronized</span>
+                </div>
+              </div>
+            </div>
+            <div class="active-users" id="activeUsers">
+              <!-- Active users will be added here dynamically -->
+            </div>
+          </div>
+
+          <!-- Emoji reactions -->
+          <div class="emoji-reactions" id="emojiReactions">
+            <div class="emoji-buttons">
+              <button class="emoji-button" data-emoji="👍">👍</button>
+              <button class="emoji-button" data-emoji="❤️">❤️</button>
+              <button class="emoji-button" data-emoji="😂">😂</button>
+              <button class="emoji-button" data-emoji="🔥">🔥</button>
+              <button class="emoji-button" data-emoji="🎵">🎵</button>
+              <button class="emoji-button" data-emoji="🎧">🎧</button>
+              <button class="emoji-button" data-emoji="🎸">🎸</button>
+              <button class="emoji-button" data-emoji="👏">👏</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sidebar container -->
+        <div class="sidebar-container">
+          <!-- Sidebar tabs -->
+          <div class="sidebar-tabs">
+            <button class="sidebar-tab active" data-tab="queue">
+              <i class="fas fa-list"></i>
+              <span class="tab-text">Queue</span>
+            </button>
+            <button class="sidebar-tab" data-tab="chat">
+              <i class="fas fa-comments"></i>
+              <span class="tab-text">Chat</span>
+              <span class="unread-badge" id="unreadBadge">0</span>
+            </button>
+            <button class="sidebar-tab" data-tab="settings">
+              <i class="fas fa-cog"></i>
+              <span class="tab-text">Settings</span>
+            </button>
+            <button id="toggleSidebarBtn" class="toggle-sidebar-button">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Sidebar content -->
+          <div class="sidebar-content">
+            <!-- Queue tab -->
+            <div class="sidebar-panel active" id="queuePanel">
+              <div class="search-container">
+                <div class="search-input-container">
+                  <i class="fas fa-search search-icon"></i>
+                  <input
+                    type="text"
+                    id="youtubeSearchInput"
+                    placeholder="Search for songs, artists, or videos..."
+                  />
+                  <button id="searchButton" class="search-button">
+                    <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+                <div id="searchResults" class="search-results-container">
+                  <!-- Search results will appear here -->
+                </div>
+              </div>
+
+              <div class="queue-container">
+                <div class="queue-header">
+                  <h3>
+                    Up Next <span id="queueCount" class="queue-count">0</span>
+                  </h3>
+                  <button id="clearQueueBtn" class="clear-queue-button">
+                    <i class="fas fa-trash-alt"></i> Clear
+                  </button>
+                </div>
+                <ul id="youtubeResults" class="queue-list">
+                  <!-- Queue items will be added here dynamically -->
+                  <li class="empty-queue">
+                    <p>Your queue is empty. Search for videos to add.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Chat tab -->
+            <div class="sidebar-panel" id="chatPanel">
+              <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                  <p>
+                    Welcome to the chat! Share your thoughts about the music.
+                  </p>
+                </div>
+                <!-- Chat messages will be added here dynamically -->
+              </div>
+
+              <div class="chat-input-container">
+                <input
+                  type="text"
+                  id="chatInput"
+                  placeholder="Type a message..."
+                  autocomplete="off"
+                />
+                <button id="sendMessageBtn">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Settings tab -->
+            <div class="sidebar-panel" id="settingsPanel">
+              <div class="settings-container">
+                <h3>Appearance</h3>
+                <div class="setting-item">
+                  <label for="themeSelect">Theme</label>
+                  <select id="themeSelect" class="setting-control">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System Default</option>
+                  </select>
+                </div>
+
+                <h3>Playback</h3>
+                <div class="setting-item">
+                  <label for="autoplayToggle">Autoplay next song</label>
+                  <label class="switch">
+                    <input type="checkbox" id="autoplayToggle" />
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+
+                <div class="setting-item">
+                  <label for="qualitySelect">Video Quality</label>
+                  <select id="qualitySelect" class="setting-control">
+                    <option value="auto">Auto</option>
+                    <option value="hd">HD (720p)</option>
+                    <option value="fullhd">Full HD (1080p)</option>
+                  </select>
+                </div>
+
+                <h3>Keyboard Shortcuts</h3>
+                <div class="shortcuts-list">
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">Space</span>
+                    <span class="shortcut-desc">Play/Pause</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">→</span>
+                    <span class="shortcut-desc">Forward 10 seconds</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">←</span>
+                    <span class="shortcut-desc">Backward 10 seconds</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">F</span>
+                    <span class="shortcut-desc">Fullscreen</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">M</span>
+                    <span class="shortcut-desc">Mute/Unmute</span>
+                  </div>
+                </div>
+
+                <h3>About</h3>
+                <div class="about-info">
+                  <p>VibeRoom v1.0</p>
+                  <p>
+                    Share music and vibe together with friends in real-time.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Audio element for voice chat -->
+      <audio id="remoteAudio" autoplay></audio>
+
+      <!-- Notifications area -->
+      <div id="notificationsContainer" class="notifications-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="client.js"></script>
+  </body>
 </html>
