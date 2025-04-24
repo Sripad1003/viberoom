@@ -430,12 +430,21 @@ function setupSocketListeners() {
 
   // Queue update
   socket.on("queue-update", ({ queue, currentVideoIndex: newIndex }) => {
+    const previousIndex = currentVideoIndex;
     videoQueue = queue;
     currentVideoIndex = newIndex;
     updateQueueUI();
 
-    if (currentVideoIndex >= 0 && currentVideoIndex < videoQueue.length) {
+    if (
+      currentVideoIndex >= 0 &&
+      currentVideoIndex < videoQueue.length &&
+      currentVideoIndex !== previousIndex
+    ) {
       playVideoAtIndex(currentVideoIndex, true);
+      hideVideoOverlay();
+    } else if (currentVideoIndex >= 0 && currentVideoIndex < videoQueue.length) {
+      // Just update now playing info without restarting video
+      updateNowPlayingInfo(videoQueue[currentVideoIndex]);
       hideVideoOverlay();
     } else {
       showVideoOverlay();
@@ -449,6 +458,7 @@ function setupSocketListeners() {
       showSyncStatus(true, `Syncing with ${sender}...`);
       player.seekTo(time, true);
       player.playVideo();
+      updateControlButtons();
       setTimeout(() => {
         showSyncStatus(false, "Synchronized");
       }, 1000);
@@ -461,6 +471,7 @@ function setupSocketListeners() {
       showSyncStatus(true, `Syncing with ${sender}...`);
       player.seekTo(time, true);
       player.pauseVideo();
+      updateControlButtons();
       setTimeout(() => {
         showSyncStatus(false, "Synchronized");
       }, 1000);
@@ -731,7 +742,7 @@ function onPlayerStateChange(event) {
     const currentTime = player.getCurrentTime();
     const diff = Math.abs(currentTime - lastSentTime);
 
-    if (diff > 1.0 && !isSyncing) {
+    if (diff > 2.5 && !isSyncing) {
       socket.emit("seek", { room, username, time: currentTime });
       lastSentTime = currentTime;
     }
@@ -819,19 +830,8 @@ function playPrevious() {
 function playVideoAtIndex(index, autoplay = true) {
   if (index < 0 || index >= videoQueue.length) return;
 
-  const previousVideoId =
-    currentVideoIndex >= 0 ? videoQueue[currentVideoIndex]?.videoId : null;
   const newVideoId = videoQueue[index].videoId;
   currentVideoIndex = index;
-
-  // Only reset position if it's a different video
-  if (player && previousVideoId === newVideoId) {
-    // Keep current position and just update UI
-    updateQueueUI();
-    updateControlButtons();
-    updateNowPlayingInfo(videoQueue[index]);
-    return;
-  }
 
   if (player) {
     player.loadVideoById(newVideoId);
@@ -916,6 +916,16 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
     return;
   }
 
+  // Limit queue length to 10 videos
+  if (videoQueue.length >= 10) {
+    showNotification(
+      "Queue Limit",
+      "You can only add up to 10 videos in the queue",
+      "fa-exclamation-triangle"
+    );
+    return;
+  }
+
   const newVideo = {
     videoId,
     title,
@@ -932,12 +942,25 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
     newIndex = 0;
   }
 
+  // If a video is currently playing, keep currentVideoIndex unchanged to avoid restarting
+  // Only update currentVideoIndex if no video is playing (currentVideoIndex === -1)
+  if (currentVideoIndex === -1) {
+    newIndex = 0;
+  } else {
+    newIndex = currentVideoIndex;
+  }
+
   socket.emit("queue-update", {
     room,
     queue: newQueue,
     currentVideoIndex: newIndex,
   });
   showNotification("Queue", `Added "${title}" to queue`, "fa-plus");
+
+  // Hide overlay if this is the first video added
+  if (newQueue.length === 1) {
+    hideVideoOverlay();
+  }
 }
 
 function updateQueueUI() {
@@ -977,6 +1000,9 @@ function updateQueueUI() {
     // Play this video when clicked
     queueItem.addEventListener("click", (e) => {
       if (!e.target.closest(".queue-actions")) {
+        // Update UI immediately
+        playVideoAtIndex(index, true);
+        // Emit socket event to sync with others
         socket.emit("queue-update", {
           room,
           queue: videoQueue,
@@ -1459,14 +1485,94 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Fast Seek Sync: every 0.5 sec
+document.addEventListener("DOMContentLoaded", () => {
+  const emojiToggleBtn = document.getElementById("emojiToggleBtn");
+  const emojiPopup = document.getElementById("emojiPopup");
+  const videoOverlay = document.querySelector(".video-overlay");
+  const roomContent = document.querySelector(".room-content");
+  const chatSidebarTab = document.querySelector('.sidebar-tab[data-tab="queue"]');
+  const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+
+  // Toggle emoji popup visibility
+  emojiToggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    emojiPopup.classList.toggle("hidden");
+  });
+
+  // Hide emoji popup when clicking outside
+  document.addEventListener("click", () => {
+    if (!emojiPopup.classList.contains("hidden")) {
+      emojiPopup.classList.add("hidden");
+    }
+  });
+
+  // Handle emoji button clicks
+  emojiPopup.querySelectorAll(".emoji-button").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const emoji = e.currentTarget.getAttribute("data-emoji");
+      sendEmojiReaction(emoji);
+
+      // Hide popup after selection
+      emojiPopup.classList.add("hidden");
+    });
+  });
+
+  // Function to toggle sidebar collapsed and video overlay shrunk
+  function toggleSidebar() {
+    if (roomContent) {
+      roomContent.classList.toggle("sidebar-collapsed");
+    }
+    if (videoOverlay) {
+      videoOverlay.classList.toggle("shrunk");
+    }
+  }
+
+  // Add click listeners to chat sidebar tab and toggle sidebar button
+  if (chatSidebarTab) {
+    chatSidebarTab.addEventListener("click", () => {
+      toggleSidebar();
+    });
+  }
+
+  if (toggleSidebarBtn) {
+    toggleSidebarBtn.addEventListener("click", () => {
+      toggleSidebar();
+    });
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const header = document.querySelector(".room-header");
+  let lastScrollTop = 0;
+
+  window.addEventListener("scroll", () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (scrollTop > lastScrollTop && scrollTop > 50) {
+      // Scrolling down
+      header.classList.add("scrolled-up");
+    } else {
+      // Scrolling up
+      header.classList.remove("scrolled-up");
+    }
+
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+  });
+});
+
+
+const SEEK_THRESHOLD = 2.5; // seconds
+const SEEK_EMIT_INTERVAL = 1000; // milliseconds
+
+// Fast Seek Sync: every 1 sec with threshold
 setInterval(() => {
+  let t = currentTime;
   if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
     const currentTime = player.getCurrentTime();
-    const diff = Math.abs(currentTime - lastSentTime);
-    if (!isSyncing && diff > 0.5) {
+    const diff = Math.abs(currentTime - lastSentTime)+t;
+    if (!isSyncing && diff > SEEK_THRESHOLD+t) {
       socket.emit("seek", { room, username, time: currentTime });
       lastSentTime = currentTime;
     }
   }
-}, 500);
+}, SEEK_EMIT_INTERVAL+t);
