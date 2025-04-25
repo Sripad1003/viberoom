@@ -69,7 +69,6 @@ const sendMessageBtn = document.getElementById("sendMessageBtn");
 const emojiButtons = document.querySelectorAll(".emoji-button");
 const sidebarTabs = document.querySelectorAll(".sidebar-tab");
 const sidebarPanels = document.querySelectorAll(".sidebar-panel");
-const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
 const theaterModeBtn = document.getElementById("theaterModeBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const unreadBadge = document.getElementById("unreadBadge");
@@ -227,10 +226,6 @@ function setupEventListeners() {
     });
   });
 
-  // Toggle sidebar button
-  toggleSidebarBtn.addEventListener("click", () => {
-    document.body.classList.toggle("sidebar-collapsed");
-  });
 
   // Theater mode button
   theaterModeBtn.addEventListener("click", toggleTheaterMode);
@@ -742,7 +737,7 @@ function onPlayerStateChange(event) {
     const currentTime = player.getCurrentTime();
     const diff = Math.abs(currentTime - lastSentTime);
 
-    if (diff > 2.5 && !isSyncing) {
+    if (diff > 0.5 && !isSyncing) {
       socket.emit("seek", { room, username, time: currentTime });
       lastSentTime = currentTime;
     }
@@ -1491,7 +1486,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const videoOverlay = document.querySelector(".video-overlay");
   const roomContent = document.querySelector(".room-content");
   const chatSidebarTab = document.querySelector('.sidebar-tab[data-tab="queue"]');
-  const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
 
   // Toggle emoji popup visibility
   emojiToggleBtn.addEventListener("click", (e) => {
@@ -1524,6 +1518,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (videoOverlay) {
       videoOverlay.classList.toggle("shrunk");
+      const overlayMessage = videoOverlay.querySelector(".overlay-message");
+      if (overlayMessage) {
+        overlayMessage.classList.toggle("shrunk");
+      }
     }
   }
 
@@ -1534,11 +1532,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (toggleSidebarBtn) {
-    toggleSidebarBtn.addEventListener("click", () => {
-      toggleSidebar();
-    });
-  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1561,18 +1554,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-const SEEK_THRESHOLD = 2.5; // seconds
-const SEEK_EMIT_INTERVAL = 1000; // milliseconds
-
-// Fast Seek Sync: every 1 sec with threshold
-setInterval(() => {
-  let t = currentTime;
-  if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
-    const currentTime = player.getCurrentTime();
-    const diff = Math.abs(currentTime - lastSentTime)+t;
-    if (!isSyncing && diff > SEEK_THRESHOLD+t) {
-      socket.emit("seek", { room, username, time: currentTime });
-      lastSentTime = currentTime;
-    }
-  }
-}, SEEK_EMIT_INTERVAL+t);

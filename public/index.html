@@ -114,5 +114,29 @@
             .dispatchEvent(new Event("submit"));
         });
     </script>
+    <!-- Add this script at the end of the body tag to ensure it runs after the page loads -->
+<script>
+  // This script ensures the responsive UI is initialized when the index page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check if initResponsiveUI exists (it should be defined in client.js)
+    if (typeof initResponsiveUI === 'function') {
+      initResponsiveUI();
+    } else {
+      // If not defined yet, wait for client.js to load
+      const checkInterval = setInterval(function() {
+        if (typeof initResponsiveUI === 'function') {
+          initResponsiveUI();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      
+      // Stop checking after 5 seconds to prevent infinite loop
+      setTimeout(function() {
+        clearInterval(checkInterval);
+      }, 5000);
+    }
+  });
+</script>
+
   </body>
 </html>
