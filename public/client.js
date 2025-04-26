@@ -432,16 +432,24 @@ function setupSocketListeners() {
 
     if (
       currentVideoIndex >= 0 &&
-      currentVideoIndex < videoQueue.length &&
-      currentVideoIndex !== previousIndex
+      currentVideoIndex < videoQueue.length
     ) {
+      // Always play video at current index to ensure playback starts
       playVideoAtIndex(currentVideoIndex, true);
       hideVideoOverlay();
-    } else if (currentVideoIndex >= 0 && currentVideoIndex < videoQueue.length) {
-      // Just update now playing info without restarting video
-      updateNowPlayingInfo(videoQueue[currentVideoIndex]);
-      hideVideoOverlay();
     } else {
+      // Queue is empty or invalid index, stop player and clear video section
+      if (player) {
+        player.stopVideo();
+      }
+      // Stop visualizer animation when queue is empty
+      stopVisualizer();
+      // Reset ytplayer div content to empty with style user-select: auto
+      const ytPlayer = document.getElementById("ytplayer");
+      if (ytPlayer) {
+        ytPlayer.innerHTML = "";
+        ytPlayer.style.userSelect = "auto";
+      }
       showVideoOverlay();
       updateNowPlayingInfo(null);
     }
@@ -929,6 +937,7 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
     addedBy: username,
   };
 
+  const wasEmpty = videoQueue.length === 0;
   const newQueue = [...videoQueue, newVideo];
   let newIndex = currentVideoIndex;
 
@@ -955,6 +964,12 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
   // Hide overlay if this is the first video added
   if (newQueue.length === 1) {
     hideVideoOverlay();
+  }
+
+  // If queue was empty before adding, play the new video and update now playing info
+  if (wasEmpty) {
+    playVideoAtIndex(newIndex, true);
+    updateNowPlayingInfo(newVideo);
   }
 }
 
@@ -1003,6 +1018,8 @@ function updateQueueUI() {
           queue: videoQueue,
           currentVideoIndex: index,
         });
+        // Ensure now playing info updates even if index is same
+        updateNowPlayingInfo(videoQueue[index]);
       }
     });
 
@@ -1029,7 +1046,7 @@ function removeFromQueue(index) {
   if (newQueue.length === 0) {
     newIndex = -1;
   } else if (index === currentVideoIndex) {
-    // If removing current playing video, play the next one
+    // If removing current playing video, play the next one or previous if last
     newIndex = Math.min(index, newQueue.length - 1);
   } else if (index < currentVideoIndex) {
     // If removing a video before current, adjust index
@@ -1195,7 +1212,13 @@ function updateControlButtons() {
 function updateNowPlayingInfo(video) {
   if (!video) {
     currentTitle.textContent = "Nothing playing";
+    // Clear thumbnail image and show neutral icon
     currentThumbnail.innerHTML = '<i class="fas fa-music"></i>';
+    // Also clear the video player iframe src to remove thumbnail image
+    const ytPlayer = document.getElementById("ytplayer");
+    if (ytPlayer) {
+      ytPlayer.innerHTML = "";
+    }
     return;
   }
 
