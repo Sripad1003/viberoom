@@ -256,6 +256,7 @@
   }
   
   .room-header {
+    overflow: hidden;
     height: var(--header-height);
     background-color: var(--bg-card);
     padding: 0 var(--spacing-md);
@@ -331,7 +332,7 @@
   display: flex;
   height: 100%;
   width: 100%;
-  overflow-y: hidden;
+  overflow: hidden;
   flex-direction: row;
 }
 
@@ -350,17 +351,15 @@
   .player-section {
     flex-grow: 1;
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
+    flex-wrap: wrap;
     padding: var(--spacing-sm);
     transition: width 0.3s ease;
     overflow-y: scroll;
+    justify-content: space-around;
     
   }
-  
-  /* .sidebar-collapsed .player-section {
-    margin-right: var(--sidebar-collapsed-width);
-  } */
-  
+    
   .theater-mode .player-section {
     margin-right: 0;
   }
@@ -379,7 +378,7 @@
     padding-top: 40%; /* 16:9 aspect ratio */
     background-color: #000;
     border-radius: var(--border-radius);
-    overflow:auto;
+    overflow: hidden;
     box-shadow: var(--shadow);
   }
   
@@ -423,6 +422,13 @@
   .overlay-message {
     padding: var(--spacing-lg);
     align-items: center;
+    justify-content: center;
+    transition: width 0.3s ease, margin 0.3s ease;
+  }
+
+  .overlay-message.shrunk {
+    width: calc(100% - var(--sidebar-width));
+    margin-left: calc(var(--sidebar-width));
   }
   
   /* Video controls overlay */
@@ -444,7 +450,7 @@
     z-index: 6;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+  justify-content:space-between;
     padding: var(--spacing-sm);
     border-radius: var(--border-radius);
   }
@@ -484,7 +490,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 7%;
+    height: 10%;
     padding: 10px 10px;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
     display: flex;
@@ -510,7 +516,7 @@
   
   .progress-bar {
     width: 100%;
-    height: 4px;
+    height: 10%;
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     overflow: hidden;
@@ -629,7 +635,7 @@
     border-radius: var(--border-radius);
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-sm);
+    gap: 5px;
     align-items: center;
     justify-content: space-between;
     box-shadow: var(--shadow);
@@ -754,7 +760,7 @@
   }
   
   .now-playing {
-    margin-top: 8px;
+    /* margin-top: 8px; */
     background-color: var(--bg-card);
     padding: 3px;
     border-radius: var(--border-radius);
@@ -1168,7 +1174,7 @@
   
   .clear-queue-button {
     background-color: transparent;
-    color: var(--text-lighter);
+    color: var(--text-light);
     border: none;
     font-size: 0.9rem;
     display: flex;
@@ -1601,10 +1607,15 @@
     }
   
     .player-section {
+      flex-grow: 1;
+      display: flex;
       padding: var(--spacing-sm);
+      transition: width 0.3s ease;
+      overflow: hidden;
+      flex-wrap: wrap;
     }
   }
-  
+  /*
   @media (max-width: 768px) {
     .room-header {
       padding: var(--spacing-sm);
@@ -1647,7 +1658,7 @@
       align-self: flex-start;
     }
   
-    /* Mobile sidebar toggle */
+    Mobile sidebar toggle
     .mobile-sidebar-toggle {
       display: block;
       position: fixed;
@@ -1671,7 +1682,7 @@
       bottom: 40px;
     }
   }
-  
+  */
   @media (max-width: 480px) {
     .room-header {
       flex-direction: column;
@@ -1687,6 +1698,12 @@
     }
   
     .video-progress-container {
+      align-items: flex-start;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 15%;
       padding: 5px 10px;
     }
   
@@ -1709,10 +1726,19 @@
       bottom: 35px;
       left: 0;
     }
+
+    .player-section {
+      flex-grow: 1;
+      display: flex;
+      padding: var(--spacing-sm);
+      transition: width 0.3s ease;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
   
     .player-controls {
-      margin-top: 6px;
-      padding: 6px;
+      margin-top: 2px;
+      padding: 2px;
     }
   
     .now-playing {
@@ -1721,7 +1747,8 @@
     }
   
     .sidebar-container {
-      height: 85%;
+      height: 75%;
+      width: 100%;
     }
   }
   
@@ -1741,8 +1768,7 @@
   
   /* Music visualizer */
   .visualizer-container {
-    position: absolute;
-    bottom: 40px;
+    position:relative;
     left: 0;
     width: 100%;
     height: 40px;
@@ -1750,7 +1776,7 @@
     align-items: flex-end;
     justify-content: center;
     gap: 2px;
-    padding: 0 var(--spacing-md);
+    padding: var(--spacing-sm);
     z-index: 5;
   }
   
@@ -1792,7 +1818,168 @@
   padding: 2px !important;
 }
 
+
+
 .sidebar-container {
   height: 90% !important;
 }
+
+/* Add these responsive styles at the end of the file to ensure they override existing styles */
+
+/* Mobile and Tablet Responsive Styles */
+@media screen and (max-width: 768px) {
+  /* General responsive adjustments */
+  body {
+    overflow-x: hidden;
+  }
+
+  .container {
+    width: 100%;
+    padding: 0;
+  }
+
+  .player-section {
+    flex-grow: 1;
+    display: flex;
+    padding: var(--spacing-sm);
+    transition: width 0.3s ease;
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
   
+  /* Sidebar styles for mobile */
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    background-color: var(--bg-color);
+    overflow-y: auto;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  /* Sidebar toggle button for mobile */
+  .sidebar-toggle {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    cursor: pointer;
+  }
+
+  /* Adjust main content when sidebar is open */
+  .main-content {
+    transition: margin-left 0.3s ease;
+  }
+
+  .main-content.sidebar-active {
+    margin-left: 0;
+  }
+
+  /* Adjust room controls for smaller screens */
+  .room-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .control-group {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  /* Adjust user list for mobile */
+  .user-list {
+    max-height: 30vh;
+  }
+
+  /* Adjust chat for mobile */
+  .chat-container {
+    max-height: 40vh;
+  }
+
+  /* Adjust music player for mobile */
+  .music-player {
+    width: 100%;
+  }
+
+  /* Close button for mobile sidebar */
+  .sidebar-close {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+  }
+}
+
+/* Tablet specific styles */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  /* Sidebar for tablets - similar to desktop but with adjustments */
+  .sidebar {
+    width: 250px;
+    position: fixed;
+    left: 0;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.hidden {
+    left: -250px;
+  }
+
+  /* Main content adjusts based on sidebar */
+  .main-content {
+    margin-left: 250px;
+    transition: margin-left 0.3s ease;
+    width: calc(100% - 250px);
+  }
+
+  .main-content.full-width {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Sidebar toggle for tablet */
+  .sidebar-toggle {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  /* Adjust room controls for tablet */
+  .control-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Adjust visualizer for tablet */
+  .visualizer-container {
+    height: 200px;
+  }
+}

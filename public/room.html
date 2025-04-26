@@ -13,6 +13,11 @@
 
 <body>
   <div class="room-container">
+    <!-- Portrait view suggestion button for small screens
+    <button id="portraitViewBtn" class="portrait-view-button" title="Switch to Portrait View">
+      <i class="fas fa-mobile-alt"></i> Use Portrait View
+    </button> -->
+
     <!-- Header with room info -->
     <header class="room-header">
       <div class="room-info">
@@ -76,6 +81,26 @@
           </div>
         </div>
 
+        <div class="now-playing">
+          <div class="now-playing-info">
+            <div class="now-playing-thumbnail" id="currentThumbnail">
+              <i class="fas fa-music"></i>
+            </div>
+            <div class="now-playing-details">
+              <h3 id="currentTitle">Nothing playing</h3>
+              <div class="sync-status">
+                <span id="syncIndicator" class="sync-indicator">
+                  <i class="fas fa-sync-alt"></i>
+                </span>
+                <span id="syncStatus">Synchronized</span>
+              </div>
+            </div>
+          </div>
+          <div class="active-users" id="activeUsers">
+            <!-- Active users will be added here dynamically -->
+          </div>
+        </div>
+
           <div class="player-controls">
             <button id="emojiToggleBtn" class="emoji-toggle-button" title="Show emojis">
               <i class="fas fa-smile"></i>
@@ -129,27 +154,10 @@
             </div>
           </div>
 
-        <div class="now-playing">
-          <div class="now-playing-info">
-            <div class="now-playing-thumbnail" id="currentThumbnail">
-              <i class="fas fa-music"></i>
-            </div>
-            <div class="now-playing-details">
-              <h3 id="currentTitle">Nothing playing</h3>
-              <div class="sync-status">
-                <span id="syncIndicator" class="sync-indicator">
-                  <i class="fas fa-sync-alt"></i>
-                </span>
-                <span id="syncStatus">Synchronized</span>
-              </div>
-            </div>
-          </div>
-          <div class="active-users" id="activeUsers">
-            <!-- Active users will be added here dynamically -->
-          </div>
-        </div>
+
 
         
+
 
       </section>
 
@@ -289,9 +297,6 @@
             <i class="fas fa-cog"></i>
             <span class="tab-text">Settings</span>
           </button>
-          <button id="toggleSidebarBtn" class="toggle-sidebar-button">
-            <i class="fas fa-chevron-right"></i>
-          </button>
         </div>
       </div>
     </main>
@@ -304,6 +309,30 @@
   </div>
 
   <!-- Scripts -->
+   <!-- Add this script at the end of the body tag to ensure it runs after the page loads -->
+<script>
+  // This script ensures the responsive UI is initialized when the room page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check if initResponsiveUI exists (it should be defined in client.js)
+    if (typeof initResponsiveUI === 'function') {
+      initResponsiveUI();
+    } else {
+      // If not defined yet, wait for client.js to load
+      const checkInterval = setInterval(function() {
+        if (typeof initResponsiveUI === 'function') {
+          initResponsiveUI();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      
+      // Stop checking after 5 seconds to prevent infinite loop
+      setTimeout(function() {
+        clearInterval(checkInterval);
+      }, 5000);
+    }
+  });
+</script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="client.js"></script>
