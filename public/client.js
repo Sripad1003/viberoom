@@ -33,8 +33,51 @@ const config = {
   ],
 };
 
-// Initialize socket connection
-const socket = io();
+const deployedServerUrl = window.location.origin; // Use current origin for socket connection
+
+// Initialize socket connection with explicit URL and logging
+const socket = io(deployedServerUrl, {
+  transports: ["websocket"],
+  secure: true,
+  reconnectionAttempts: 5,
+  timeout: 10000,
+});
+
+socket.on("connect", () => {
+  console.log("[Socket.IO] Connected to server:", socket.id);
+});
+
+socket.on("connect_error", (error) => {
+  console.error("[Socket.IO] Connection error:", error);
+});
+
+socket.on("disconnect", (reason) => {
+  console.warn("[Socket.IO] Disconnected:", reason);
+});
+
+socket.on("reconnect_attempt", (attempt) => {
+  console.log("[Socket.IO] Reconnect attempt:", attempt);
+});
+
+socket.on("reconnect_failed", () => {
+  console.error("[Socket.IO] Reconnect failed");
+});
+
+// Wrap RTCPeerConnection to add logging for ICE connection state changes
+const originalRTCPeerConnection = window.RTCPeerConnection;
+window.RTCPeerConnection = function (config) {
+  const pc = new originalRTCPeerConnection(config);
+
+  pc.addEventListener("iceconnectionstatechange", () => {
+    console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
+  });
+
+  pc.addEventListener("icecandidateerror", (event) => {
+    console.error("[WebRTC] ICE candidate error:", event);
+  });
+
+  return pc;
+};
 
 // DOM Elements
 const volumeSlider = document.getElementById("volumeSlider");
