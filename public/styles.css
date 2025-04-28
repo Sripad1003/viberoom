@@ -298,7 +298,7 @@ img {
 
 /* Join section styles */
 .join-section {
-  width: 50%;
+  width: 100%;
   padding: 80px var(--spacing-lg);
   display: flex;
   justify-content: space-around;
@@ -620,7 +620,7 @@ img {
   align-self: auto;
   align-items: center;
   align-content: center;
-  height: auto;
+  height: 35cap;
   /* width: 50%; */
   width: 100%;
   display: block;
@@ -2506,7 +2506,8 @@ footer {
       display: flex;
       padding: var(--spacing-sm);
       transition: width 0.3s ease;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: scroll;
       flex-wrap: wrap;
   }
   
