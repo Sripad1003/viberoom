@@ -1,25 +1,24 @@
 // Global variables
-let player;
-let localStream;
-let peerConnection;
-let isSyncing = false;
-let autoPlayEnabled = false;
-let isCallActive = false;
-let videoQueue = [];
-let currentVideoIndex = -1;
-let isDragging = false;
-let progressUpdateInterval;
-let isTheaterMode = false;
-let isFullscreen = false;
-let unreadMessages = 0;
-const userColors = {};
-const userInitials = {};
+let player
+let localStream
+let peerConnection
+let isSyncing = false
+let autoPlayEnabled = false
+const isCallActive = false
+let videoQueue = []
+let currentVideoIndex = -1
+let isDragging = false
+let progressUpdateInterval
+let isTheaterMode = false
+let isFullscreen = false
+let unreadMessages = 0
+const userColors = {}
+const userInitials = {}
 
 // Get room and username from URL
-const urlParams = new URLSearchParams(window.location.search);
-const username =
-  urlParams.get("username") || `User${Math.floor(Math.random() * 1000)}`;
-const room = urlParams.get("room") || "default-room";
+const urlParams = new URLSearchParams(window.location.search)
+const username = urlParams.get("username") || `User${Math.floor(Math.random() * 1000)}`
+const room = urlParams.get("room") || "default-room"
 
 // WebRTC configuration
 const config = {
@@ -31,9 +30,9 @@ const config = {
       credential: "openrelayproject",
     },
   ],
-};
+}
 
-const deployedServerUrl = window.location.origin; // Use current origin for socket connection
+const deployedServerUrl = window.location.origin // Use current origin for socket connection
 
 // Initialize socket connection with explicit URL and logging
 const socket = io(deployedServerUrl, {
@@ -41,115 +40,112 @@ const socket = io(deployedServerUrl, {
   secure: true,
   reconnectionAttempts: 5,
   timeout: 10000,
-});
+})
 
 socket.on("connect", () => {
-  console.log("[Socket.IO] Connected to server:", socket.id);
-});
+  console.log("[Socket.IO] Connected to server:", socket.id)
+})
 
 socket.on("connect_error", (error) => {
-  console.error("[Socket.IO] Connection error:", error);
-});
+  console.error("[Socket.IO] Connection error:", error)
+})
 
 socket.on("disconnect", (reason) => {
-  console.warn("[Socket.IO] Disconnected:", reason);
-});
+  console.warn("[Socket.IO] Disconnected:", reason)
+})
 
 socket.on("reconnect_attempt", (attempt) => {
-  console.log("[Socket.IO] Reconnect attempt:", attempt);
-});
+  console.log("[Socket.IO] Reconnect attempt:", attempt)
+})
 
 socket.on("reconnect_failed", () => {
-  console.error("[Socket.IO] Reconnect failed");
-});
+  console.error("[Socket.IO] Reconnect failed")
+})
 
 // Wrap RTCPeerConnection to add logging for ICE connection state changes
-const originalRTCPeerConnection = window.RTCPeerConnection;
-window.RTCPeerConnection = function (config) {
-  const pc = new originalRTCPeerConnection(config);
+const originalRTCPeerConnection = window.RTCPeerConnection
+window.RTCPeerConnection = (config) => {
+  const pc = new originalRTCPeerConnection(config)
 
   pc.addEventListener("iceconnectionstatechange", () => {
-    console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
-  });
+    console.log("[WebRTC] ICE connection state:", pc.iceConnectionState)
+  })
 
   pc.addEventListener("icecandidateerror", (event) => {
-    console.error("[WebRTC] ICE candidate error:", event);
-  });
+    console.error("[WebRTC] ICE candidate error:", event)
+  })
 
-  return pc;
-};
+  return pc
+}
 
 // DOM Elements
-const volumeSlider = document.getElementById("volumeSlider");
-const autoPlayToggle = document.getElementById("autoPlayToggle");
-const searchButton = document.getElementById("searchButton");
-const searchInput = document.getElementById("youtubeSearchInput");
-const searchResults = document.getElementById("searchResults");
-const queueList = document.getElementById("youtubeResults");
-const videoOverlay = document.getElementById("videoOverlay");
-const currentTitle = document.getElementById("currentTitle");
-const currentThumbnail = document.getElementById("currentThumbnail");
-const syncIndicator = document.getElementById("syncIndicator");
-const syncStatus = document.getElementById("syncStatus");
-const roomNameElement = document.getElementById("roomName");
-const userNameElement = document.getElementById("userName");
-const userAvatarElement = document.getElementById("userAvatar");
-const onlineCountElement = document.getElementById("onlineCount");
-const activeUsersElement = document.getElementById("activeUsers");
-const queueCountElement = document.getElementById("queueCount");
-const clearQueueBtn = document.getElementById("clearQueueBtn");
-const leaveRoomBtn = document.getElementById("leaveRoomBtn");
-const startCallBtn = document.getElementById("startCallBtn");
-const endCallBtn = document.getElementById("endCallBtn");
-const progressBar = document.querySelector(".progress-bar");
-const progressBarFill = document.querySelector(".progress-bar-fill");
-const progressBarHandle = document.querySelector(".progress-bar-handle");
-const currentTimeDisplay = document.querySelector(".current-time");
-const totalTimeDisplay = document.querySelector(".total-time");
-const chatMessages = document.getElementById("chatMessages");
-const chatInput = document.getElementById("chatInput");
-const sendMessageBtn = document.getElementById("sendMessageBtn");
-const emojiButtons = document.querySelectorAll(".emoji-button");
-const sidebarTabs = document.querySelectorAll(".sidebar-tab");
-const sidebarPanels = document.querySelectorAll(".sidebar-panel");
-const theaterModeBtn = document.getElementById("theaterModeBtn");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-const unreadBadge = document.getElementById("unreadBadge");
-const themeSelect = document.getElementById("themeSelect");
-const autoplayToggle = document.getElementById("autoplayToggle");
-const qualitySelect = document.getElementById("qualitySelect");
+const volumeSlider = document.getElementById("volumeSlider")
+const autoPlayToggle = document.getElementById("autoPlayToggle")
+const searchButton = document.getElementById("searchButton")
+const searchInput = document.getElementById("youtubeSearchInput")
+const searchResults = document.getElementById("searchResults")
+const queueList = document.getElementById("youtubeResults")
+const videoOverlay = document.getElementById("videoOverlay")
+const currentTitle = document.getElementById("currentTitle")
+const currentThumbnail = document.getElementById("currentThumbnail")
+const syncIndicator = document.getElementById("syncIndicator")
+const syncStatus = document.getElementById("syncStatus")
+const roomNameElement = document.getElementById("roomName")
+const userNameElement = document.getElementById("userName")
+const userAvatarElement = document.getElementById("userAvatar")
+const onlineCountElement = document.getElementById("onlineCount")
+const activeUsersElement = document.getElementById("activeUsers")
+const queueCountElement = document.getElementById("queueCount")
+const clearQueueBtn = document.getElementById("clearQueueBtn")
+const leaveRoomBtn = document.getElementById("leaveRoomBtn")
+const startCallBtn = document.getElementById("startCallBtn")
+const endCallBtn = document.getElementById("endCallBtn")
+const progressBar = document.querySelector(".progress-bar")
+const progressBarFill = document.querySelector(".progress-bar-fill")
+const progressBarHandle = document.querySelector(".progress-bar-handle")
+const currentTimeDisplay = document.querySelector(".current-time")
+const totalTimeDisplay = document.querySelector(".total-time")
+const chatMessages = document.getElementById("chatMessages")
+const chatInput = document.getElementById("chatInput")
+const sendMessageBtn = document.getElementById("sendMessageBtn")
+const emojiButtons = document.querySelectorAll(".emoji-button")
+const theaterModeBtn = document.getElementById("theaterModeBtn")
+const fullscreenBtn = document.getElementById("fullscreenBtn")
+const unreadBadge = document.getElementById("unreadBadge")
+const themeSelect = document.getElementById("themeSelect")
+const autoplayToggle = document.getElementById("autoplayToggle")
+const qualitySelect = document.getElementById("qualitySelect")
 
 // Initialize the application
 function initApp() {
   // Set room and user information
-  roomNameElement.textContent = room;
-  userNameElement.textContent = username;
+  roomNameElement.textContent = room
+  userNameElement.textContent = username
 
   // Generate user avatar with initials
-  const initials = getInitials(username);
-  userInitials[username] = initials;
-  userAvatarElement.textContent = initials;
+  const initials = getInitials(username)
+  userInitials[username] = initials
+  userAvatarElement.textContent = initials
 
   // Generate a random color for the user
-  const userColor = getRandomColor();
-  userColors[username] = userColor;
-  userAvatarElement.style.backgroundColor = userColor;
+  const userColor = getRandomColor()
+  userColors[username] = userColor
+  userAvatarElement.style.backgroundColor = userColor
 
   // Join the room
-  socket.emit("join-room", { room, username });
+  socket.emit("join-room", { room, username })
 
   // Setup event listeners
-  setupEventListeners();
+  setupEventListeners()
 
   // Initialize theme
-  initializeTheme();
+  initializeTheme()
+
+  // Initialize sidebar navigation
+  initSidebarNavigation()
 
   // Show notification
-  showNotification(
-    "Welcome to VibeRoom",
-    `You've joined room "${room}"`,
-    "fa-music"
-  );
+  showNotification("Welcome to VibeRoom", `You've joined room "${room}"`, "fa-music")
 }
 
 // Setup event listeners
@@ -157,304 +153,402 @@ function setupEventListeners() {
   // Volume slider
   volumeSlider.addEventListener("input", () => {
     if (player) {
-      player.setVolume(volumeSlider.value);
+      player.setVolume(volumeSlider.value)
     }
-  });
+  })
 
   // Auto play toggle
   autoPlayToggle.addEventListener("change", () => {
-    autoPlayEnabled = autoPlayToggle.checked;
-    autoplayToggle.checked = autoPlayToggle.checked;
-  });
+    autoPlayEnabled = autoPlayToggle.checked
+    autoplayToggle.checked = autoPlayToggle.checked
+  })
 
   // Settings autoplay toggle
   autoplayToggle.addEventListener("change", () => {
-    autoPlayEnabled = autoplayToggle.checked;
-    autoPlayToggle.checked = autoplayToggle.checked;
-  });
+    autoPlayEnabled = autoplayToggle.checked
+    autoPlayToggle.checked = autoplayToggle.checked
+  })
 
   // Search button
   searchButton.addEventListener("click", () => {
-    const query = searchInput.value.trim();
+    const query = searchInput.value.trim()
     if (query) {
-      performSearch(query);
+      performSearch(query)
     }
-  });
+  })
 
   // Search input (Enter key)
   searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      const query = searchInput.value.trim();
+      const query = searchInput.value.trim()
       if (query) {
-        performSearch(query);
+        performSearch(query)
       }
     }
-  });
+  })
 
   // Clear queue button
   clearQueueBtn.addEventListener("click", () => {
     if (videoQueue.length > 0) {
       if (confirm("Are you sure you want to clear the queue?")) {
-        socket.emit("queue-update", { room, queue: [], currentVideoIndex: -1 });
+        socket.emit("queue-update", { room, queue: [], currentVideoIndex: -1 })
       }
     }
-  });
+  })
 
   // Leave room button
   leaveRoomBtn.addEventListener("click", () => {
     if (confirm("Are you sure you want to leave this room?")) {
-      endCall();
-      window.location.href = "/";
+      endCall()
+      window.location.href = "/"
     }
-  });
+  })
 
   // Progress bar events
-  progressBar.addEventListener("mousedown", startSeeking);
-  document.addEventListener("mousemove", seeking);
-  document.addEventListener("mouseup", endSeeking);
+  progressBar.addEventListener("mousedown", startSeeking)
+  document.addEventListener("mousemove", seeking)
+  document.addEventListener("mouseup", endSeeking)
 
   // Touch events for mobile
-  progressBar.addEventListener("touchstart", startSeeking);
-  document.addEventListener("touchmove", seeking);
-  document.addEventListener("touchend", endSeeking);
+  progressBar.addEventListener("touchstart", startSeeking)
+  document.addEventListener("touchmove", seeking)
+  document.addEventListener("touchend", endSeeking)
 
   // Chat input
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendChatMessage();
+      e.preventDefault()
+      sendChatMessage()
     }
-  });
+  })
 
   // Send message button
-  sendMessageBtn.addEventListener("click", sendChatMessage);
+  sendMessageBtn.addEventListener("click", sendChatMessage)
 
   // Emoji reactions
   emojiButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      const emoji = button.getAttribute("data-emoji");
-      sendEmojiReaction(emoji);
-    });
-  });
-
-  // Sidebar tabs
-  sidebarTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const tabName = tab.getAttribute("data-tab");
-
-      // If clicking the active tab, toggle sidebar
-      if (
-        tab.classList.contains("active") &&
-        !document.body.classList.contains("sidebar-collapsed")
-      ) {
-        document.body.classList.add("sidebar-collapsed");
-        return;
-      }
-
-      // Remove active class from all tabs and panels
-      sidebarTabs.forEach((t) => t.classList.remove("active"));
-      sidebarPanels.forEach((p) => p.classList.remove("active"));
-
-      // Add active class to clicked tab and corresponding panel
-      tab.classList.add("active");
-      document.getElementById(`${tabName}Panel`).classList.add("active");
-
-      // Expand sidebar if collapsed
-      document.body.classList.remove("sidebar-collapsed");
-
-      // Reset unread count if chat tab
-      if (tabName === "chat") {
-        resetUnreadCount();
-      }
-    });
-  });
-
+      const emoji = button.getAttribute("data-emoji")
+      sendEmojiReaction(emoji)
+    })
+  })
 
   // Theater mode button
-  theaterModeBtn.addEventListener("click", toggleTheaterMode);
+  theaterModeBtn.addEventListener("click", toggleTheaterMode)
 
   // Fullscreen button
-  fullscreenBtn.addEventListener("click", toggleFullscreen);
+  fullscreenBtn.addEventListener("click", toggleFullscreen)
 
   // Theme selector
   themeSelect.addEventListener("change", () => {
-    setTheme(themeSelect.value);
-  });
+    setTheme(themeSelect.value)
+  })
 
   // Quality selector
   qualitySelect.addEventListener("change", () => {
     if (player) {
-      const quality = qualitySelect.value;
+      const quality = qualitySelect.value
       if (quality === "hd") {
-        player.setPlaybackQuality("hd720");
+        player.setPlaybackQuality("hd720")
       } else if (quality === "fullhd") {
-        player.setPlaybackQuality("hd1080");
+        player.setPlaybackQuality("hd1080")
       } else {
-        player.setPlaybackQuality("auto");
+        player.setPlaybackQuality("auto")
       }
     }
-  });
+  })
 
   // Keyboard shortcuts
-  document.addEventListener("keydown", handleKeyboardShortcuts);
+  document.addEventListener("keydown", handleKeyboardShortcuts)
+}
+
+// Initialize sidebar navigation
+function initSidebarNavigation() {
+  // Create sidebar navigation elements if they don't exist
+  if (!document.querySelector(".sidebar-navigation")) {
+    const sidebarNavigation = document.createElement("div")
+    sidebarNavigation.className = "sidebar-navigation"
+
+    // Create arrow button
+    const arrowButton = document.createElement("button")
+    arrowButton.id = "sidebarArrowBtn"
+    arrowButton.className = "sidebar-arrow-button"
+    arrowButton.innerHTML = '<i class="fas fa-chevron-right"></i>'
+
+    // Create dropdown menu
+    const dropdown = document.createElement("div")
+    dropdown.className = "sidebar-dropdown"
+
+    // Add dropdown items
+    const panels = ["queue", "chat", "settings"]
+    const icons = ["fa-music", "fa-comment", "fa-cog"]
+    const labels = ["Queue", "Chat", "Settings"]
+
+    panels.forEach((panel, index) => {
+      const item = document.createElement("div")
+      item.className = "dropdown-item"
+      item.dataset.panel = panel
+      item.innerHTML = `<i class="fas ${icons[index]}"></i><span>${labels[index]}</span>`
+      dropdown.appendChild(item)
+    })
+
+    // Append dropdown to sidebar navigation
+    sidebarNavigation.appendChild(dropdown)
+
+    // Append sidebar navigation to body
+    document.body.appendChild(sidebarNavigation)
+
+    // Append arrow button directly to body (outside sidebar container)
+    document.body.appendChild(arrowButton)
+
+    // Add event listeners
+    setupSidebarNavigationEvents()
+  }
+}
+
+// Setup sidebar navigation events
+function setupSidebarNavigationEvents() {
+  const sidebarArrowBtn = document.getElementById("sidebarArrowBtn")
+  const sidebarDropdown = document.querySelector(".sidebar-dropdown")
+  const dropdownItems = document.querySelectorAll(".dropdown-item")
+  const sidebarContainer = document.querySelector(".sidebar-container")
+
+  // Show dropdown on hover
+  sidebarArrowBtn.addEventListener("mouseenter", () => {
+    sidebarDropdown.classList.add("show")
+  })
+
+  // Hide dropdown when mouse leaves the navigation area
+  document.querySelector(".sidebar-navigation").addEventListener("mouseleave", () => {
+    sidebarDropdown.classList.remove("show")
+  })
+
+  // Toggle sidebar on arrow button click
+  sidebarArrowBtn.addEventListener("click", () => {
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed")
+    toggleSidebar(!isCollapsed)
+  })
+
+  // Handle dropdown item clicks
+  dropdownItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const panelId = item.dataset.panel
+
+      // Show the selected panel
+      document.querySelectorAll(".sidebar-panel").forEach((panel) => {
+        panel.classList.remove("active")
+      })
+
+      document.getElementById(`${panelId}Panel`).classList.add("active")
+
+      // Update active state in dropdown
+      dropdownItems.forEach((dropItem) => {
+        dropItem.classList.remove("active")
+      })
+      item.classList.add("active")
+
+      // Expand sidebar if collapsed
+      if (document.body.classList.contains("sidebar-collapsed")) {
+        toggleSidebar(true)
+      }
+
+      // Reset unread count if chat panel
+      if (panelId === "chat") {
+        resetUnreadCount()
+      }
+
+      // Hide dropdown after selection
+      sidebarDropdown.classList.remove("show")
+    })
+  })
+
+  // Make sure sidebar panels have the correct data-panel attributes
+  document.querySelectorAll(".sidebar-panel").forEach((panel, index) => {
+    if (index === 0) panel.dataset.panel = "queue"
+    if (index === 1) panel.dataset.panel = "chat"
+    if (index === 2) panel.dataset.panel = "settings"
+  })
+}
+
+// Toggle sidebar function
+function toggleSidebar(open) {
+  const sidebarContainer = document.querySelector(".sidebar-container")
+  const arrowBtn = document.getElementById("sidebarArrowBtn")
+
+  if (open) {
+    document.body.classList.remove("sidebar-collapsed")
+    if (arrowBtn) {
+      arrowBtn.querySelector("i").classList.remove("fa-chevron-right")
+      arrowBtn.querySelector("i").classList.add("fa-chevron-left")
+    }
+  } else {
+    document.body.classList.add("sidebar-collapsed")
+    if (arrowBtn) {
+      arrowBtn.querySelector("i").classList.remove("fa-chevron-left")
+      arrowBtn.querySelector("i").classList.add("fa-chevron-right")
+    }
+  }
 }
 
 // Keyboard shortcuts
 function handleKeyboardShortcuts(e) {
   // Only handle shortcuts if not typing in an input
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
-    return;
+    return
   }
 
   switch (e.key) {
     case " ": // Space bar
-      e.preventDefault();
+      e.preventDefault()
       if (player) {
         if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-          pauseSong();
+          pauseSong()
         } else {
-          playSong();
+          playSong()
         }
       }
-      break;
+      break
     case "ArrowRight": // Right arrow
       if (player) {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(currentTime + 10, true);
-        socket.emit("seek", { room, username, time: currentTime + 10 });
+        const currentTime = player.getCurrentTime()
+        player.seekTo(currentTime + 10, true)
+        socket.emit("seek", { room, username, time: currentTime + 10 })
       }
-      break;
+      break
     case "ArrowLeft": // Left arrow
       if (player) {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(currentTime - 10, true);
-        socket.emit("seek", { room, username, time: currentTime - 10 });
+        const currentTime = player.getCurrentTime()
+        player.seekTo(currentTime - 10, true)
+        socket.emit("seek", { room, username, time: currentTime - 10 })
       }
-      break;
+      break
     case "f": // Fullscreen
     case "F":
-      toggleFullscreen();
-      break;
+      toggleFullscreen()
+      break
     case "t": // Theater mode
     case "T":
-      toggleTheaterMode();
-      break;
+      toggleTheaterMode()
+      break
     case "m": // Mute
     case "M":
       if (player) {
         if (player.isMuted()) {
-          player.unMute();
-          volumeSlider.value = player.getVolume();
+          player.unMute()
+          volumeSlider.value = player.getVolume()
         } else {
-          player.mute();
-          volumeSlider.value = 0;
+          player.mute()
+          volumeSlider.value = 0
         }
       }
-      break;
+      break
+    case "b": // Toggle sidebar
+    case "B":
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const isCollapsed = document.body.classList.contains("sidebar-collapsed")
+        toggleSidebar(!isCollapsed)
+      }
+      break
   }
 }
 
 // Theme functions
 function initializeTheme() {
   // Check for saved theme
-  const savedTheme = localStorage.getItem("vibeRoomTheme") || "light";
-  themeSelect.value = savedTheme;
-  setTheme(savedTheme);
+  const savedTheme = localStorage.getItem("vibeRoomTheme") || "light"
+  themeSelect.value = savedTheme
+  setTheme(savedTheme)
 }
 
 function setTheme(theme) {
   if (theme === "system") {
     // Check system preference
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      document.body.classList.add("dark-theme");
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.body.classList.add("dark-theme")
     } else {
-      document.body.classList.remove("dark-theme");
+      document.body.classList.remove("dark-theme")
     }
 
     // Listen for changes in system preference
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (themeSelect.value === "system") {
-          if (e.matches) {
-            document.body.classList.add("dark-theme");
-          } else {
-            document.body.classList.remove("dark-theme");
-          }
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      if (themeSelect.value === "system") {
+        if (e.matches) {
+          document.body.classList.add("dark-theme")
+        } else {
+          document.body.classList.remove("dark-theme")
         }
-      });
+      }
+    })
   } else if (theme === "dark") {
-    document.body.classList.add("dark-theme");
+    document.body.classList.add("dark-theme")
   } else {
-    document.body.classList.remove("dark-theme");
+    document.body.classList.remove("dark-theme")
   }
 
   // Save preference
-  localStorage.setItem("vibeRoomTheme", theme);
+  localStorage.setItem("vibeRoomTheme", theme)
 }
 
 // Theater mode and fullscreen functions
 function toggleTheaterMode() {
-  isTheaterMode = !isTheaterMode;
-  document.body.classList.toggle("theater-mode", isTheaterMode);
+  isTheaterMode = !isTheaterMode
+  document.body.classList.toggle("theater-mode", isTheaterMode)
 
   if (isTheaterMode) {
-    theaterModeBtn.innerHTML = '<i class="fas fa-compress"></i>';
-    theaterModeBtn.title = "Exit Theater Mode";
+    theaterModeBtn.innerHTML = '<i class="fas fa-compress"></i>'
+    theaterModeBtn.title = "Exit Theater Mode"
   } else {
-    theaterModeBtn.innerHTML = '<i class="fas fa-tv"></i>';
-    theaterModeBtn.title = "Theater Mode";
+    theaterModeBtn.innerHTML = '<i class="fas fa-tv"></i>'
+    theaterModeBtn.title = "Theater Mode"
   }
 }
 
 function toggleFullscreen() {
-  const videoContainer = document.querySelector(".video-container");
+  const videoContainer = document.querySelector(".video-container")
 
   if (!isFullscreen) {
     if (videoContainer.requestFullscreen) {
-      videoContainer.requestFullscreen();
+      videoContainer.requestFullscreen()
     } else if (videoContainer.webkitRequestFullscreen) {
-      videoContainer.webkitRequestFullscreen();
+      videoContainer.webkitRequestFullscreen()
     } else if (videoContainer.msRequestFullscreen) {
-      videoContainer.msRequestFullscreen();
+      videoContainer.msRequestFullscreen()
     }
 
-    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-    fullscreenBtn.title = "Exit Fullscreen";
+    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>'
+    fullscreenBtn.title = "Exit Fullscreen"
   } else {
     if (document.exitFullscreen) {
-      document.exitFullscreen();
+      document.exitFullscreen()
     } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
+      document.webkitExitFullscreen()
     } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
+      document.msExitFullscreen()
     }
 
-    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-    fullscreenBtn.title = "Fullscreen";
+    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>'
+    fullscreenBtn.title = "Fullscreen"
   }
 
-  isFullscreen = !isFullscreen;
+  isFullscreen = !isFullscreen
 }
 
 // Handle fullscreen change
-document.addEventListener("fullscreenchange", handleFullscreenChange);
-document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-document.addEventListener("mozfullscreenchange", handleFullscreenChange);
-document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+document.addEventListener("fullscreenchange", handleFullscreenChange)
+document.addEventListener("webkitfullscreenchange", handleFullscreenChange)
+document.addEventListener("mozfullscreenchange", handleFullscreenChange)
+document.addEventListener("MSFullscreenChange", handleFullscreenChange)
 
 function handleFullscreenChange() {
-  isFullscreen = !!document.fullscreenElement;
+  isFullscreen = !!document.fullscreenElement
 
   if (isFullscreen) {
-    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-    fullscreenBtn.title = "Exit Fullscreen";
+    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>'
+    fullscreenBtn.title = "Exit Fullscreen"
   } else {
-    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-    fullscreenBtn.title = "Fullscreen";
+    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>'
+    fullscreenBtn.title = "Fullscreen"
   }
 }
 
@@ -462,289 +556,268 @@ function handleFullscreenChange() {
 function setupSocketListeners() {
   // Room users update
   socket.on("room-users", ({ users }) => {
-    updateActiveUsers(users);
-    onlineCountElement.textContent = users.length;
-  });
+    updateActiveUsers(users)
+    onlineCountElement.textContent = users.length
+  })
 
   // Queue update
   socket.on("queue-update", ({ queue, currentVideoIndex: newIndex }) => {
-    const previousIndex = currentVideoIndex;
-    videoQueue = queue;
-    currentVideoIndex = newIndex;
-    updateQueueUI();
+    const previousIndex = currentVideoIndex
+    videoQueue = queue
+    currentVideoIndex = newIndex
+    updateQueueUI()
 
-    if (
-      currentVideoIndex >= 0 &&
-      currentVideoIndex < videoQueue.length
-    ) {
+    if (currentVideoIndex >= 0 && currentVideoIndex < videoQueue.length) {
       // Always play video at current index to ensure playback starts
-      playVideoAtIndex(currentVideoIndex, true);
-      hideVideoOverlay();
+      playVideoAtIndex(currentVideoIndex, true)
+      hideVideoOverlay()
     } else {
       // Queue is empty or invalid index, stop player and clear video section
       if (player) {
-        player.stopVideo();
+        player.stopVideo()
       }
       // Stop visualizer animation when queue is empty
-      stopVisualizer();
+      stopVisualizer()
       // Reset ytplayer div content to empty with style user-select: auto
-      const ytPlayer = document.getElementById("ytplayer");
+      const ytPlayer = document.getElementById("ytplayer")
       if (ytPlayer) {
-        ytPlayer.innerHTML = "";
-        ytPlayer.style.userSelect = "auto";
+        ytPlayer.innerHTML = ""
+        ytPlayer.style.userSelect = "auto"
       }
-      showVideoOverlay();
-      updateNowPlayingInfo(null);
+      showVideoOverlay()
+      updateNowPlayingInfo(null)
     }
-  });
+  })
 
   // Play event
   socket.on("play", ({ username: sender, time }) => {
     if (sender !== username && player) {
-      showSyncStatus(true, `Syncing with ${sender}...`);
-      player.seekTo(time, true);
-      player.playVideo();
-      updateControlButtons();
+      showSyncStatus(true, `Syncing with ${sender}...`)
+      player.seekTo(time, true)
+      player.playVideo()
+      updateControlButtons()
       setTimeout(() => {
-        showSyncStatus(false, "Synchronized");
-      }, 1000);
+        showSyncStatus(false, "Synchronized")
+      }, 1000)
     }
-  });
+  })
 
   // Pause event
   socket.on("pause", ({ username: sender, time }) => {
     if (sender !== username && player) {
-      showSyncStatus(true, `Syncing with ${sender}...`);
-      player.seekTo(time, true);
-      player.pauseVideo();
-      updateControlButtons();
+      showSyncStatus(true, `Syncing with ${sender}...`)
+      player.seekTo(time, true)
+      player.pauseVideo()
+      updateControlButtons()
       setTimeout(() => {
-        showSyncStatus(false, "Synchronized");
-      }, 1000);
+        showSyncStatus(false, "Synchronized")
+      }, 1000)
     }
-  });
+  })
 
   // Seek event
   socket.on("seek", ({ time, username: sender }) => {
     if (sender !== username && player) {
-      isSyncing = true;
-      showSyncStatus(true, `Syncing with ${sender}...`);
-      player.seekTo(time, true);
+      isSyncing = true
+      showSyncStatus(true, `Syncing with ${sender}...`)
+      player.seekTo(time, true)
       setTimeout(() => {
-        isSyncing = false;
-        showSyncStatus(false, "Synchronized");
-      }, 1000);
+        isSyncing = false
+        showSyncStatus(false, "Synchronized")
+      }, 1000)
     }
-  });
+  })
 
   // User joined notification
   socket.on("user-joined", ({ username: joinedUser }) => {
     if (joinedUser !== username) {
-      showNotification(
-        "User Joined",
-        `${joinedUser} has joined the room`,
-        "fa-user-plus"
-      );
-      addSystemMessage(`${joinedUser} has joined the room`);
+      showNotification("User Joined", `${joinedUser} has joined the room`, "fa-user-plus")
+      addSystemMessage(`${joinedUser} has joined the room`)
     }
-  });
+  })
 
   // User left notification
   socket.on("user-left", ({ username: leftUser }) => {
-    showNotification(
-      "User Left",
-      `${leftUser} has left the room`,
-      "fa-user-minus"
-    );
-    addSystemMessage(`${leftUser} has left the room`);
-  });
+    showNotification("User Left", `${leftUser} has left the room`, "fa-user-minus")
+    addSystemMessage(`${leftUser} has left the room`)
+  })
 
   // Chat message
   socket.on("chat-message", ({ username: sender, message, timestamp }) => {
-    addChatMessage(sender, message, timestamp);
+    addChatMessage(sender, message, timestamp)
 
     // Increment unread count if not on chat tab
-    if (
-      !document
-        .querySelector('.sidebar-tab[data-tab="chat"]')
-        .classList.contains("active")
-    ) {
-      incrementUnreadCount();
+    if (!document.querySelector('.sidebar-panel[data-panel="chat"]').classList.contains("active")) {
+      incrementUnreadCount()
     }
-  });
+  })
 
   // Emoji reaction
   socket.on("emoji-reaction", ({ username: sender, emoji }) => {
-    showEmojiReaction(emoji, sender);
-  });
+    showEmojiReaction(emoji, sender)
+  })
 
   // WebRTC signaling
   socket.on("offer", async ({ offer, sender }) => {
     try {
-      showNotification("Voice Chat", `${sender} is calling...`, "fa-phone");
-      await handleIncomingCall(offer);
+      showNotification("Voice Chat", `${sender} is calling...`, "fa-phone")
+      await handleIncomingCall(offer)
     } catch (err) {
-      console.error("Error handling offer:", err);
+      console.error("Error handling offer:", err)
     }
-  });
+  })
 
   socket.on("answer", async ({ answer }) => {
     try {
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer))
     } catch (err) {
-      console.error("Error setting answer:", err);
+      console.error("Error setting answer:", err)
     }
-  });
+  })
 
   socket.on("ice-candidate", async ({ candidate }) => {
     try {
       if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
       }
     } catch (err) {
-      console.error("Error adding ICE candidate:", err);
+      console.error("Error adding ICE candidate:", err)
     }
-  });
+  })
 }
 
 // Unread messages functions
 function incrementUnreadCount() {
-  unreadMessages++;
-  updateUnreadBadge();
+  unreadMessages++
+  updateUnreadBadge()
 }
 
 function resetUnreadCount() {
-  unreadMessages = 0;
-  updateUnreadBadge();
+  unreadMessages = 0
+  updateUnreadBadge()
 }
 
 function updateUnreadBadge() {
-  unreadBadge.textContent = unreadMessages;
+  unreadBadge.textContent = unreadMessages
 
   if (unreadMessages > 0) {
-    unreadBadge.classList.add("visible");
+    unreadBadge.classList.add("visible")
   } else {
-    unreadBadge.classList.remove("visible");
+    unreadBadge.classList.remove("visible")
   }
 }
 
 // Video progress bar functions
 function startSeeking(e) {
-  e.preventDefault();
-  if (!player) return;
+  e.preventDefault()
+  if (!player) return
 
-  isDragging = true;
-  seeking(e);
+  isDragging = true
+  seeking(e)
 }
 
 function seeking(e) {
-  if (!isDragging || !player) return;
+  if (!isDragging || !player) return
 
-  e.preventDefault();
+  e.preventDefault()
 
-  const progressBarRect = progressBar.getBoundingClientRect();
-  let clientX;
+  const progressBarRect = progressBar.getBoundingClientRect()
+  let clientX
 
   if (e.type.startsWith("touch")) {
-    clientX = e.touches[0].clientX;
+    clientX = e.touches[0].clientX
   } else {
-    clientX = e.clientX;
+    clientX = e.clientX
   }
 
-  const clickPosition =
-    (clientX - progressBarRect.left) / progressBarRect.width;
-  const seekTime =
-    player.getDuration() * Math.max(0, Math.min(1, clickPosition));
+  const clickPosition = (clientX - progressBarRect.left) / progressBarRect.width
+  const seekTime = player.getDuration() * Math.max(0, Math.min(1, clickPosition))
 
   // Update UI
-  updateProgressBar(seekTime, player.getDuration());
+  updateProgressBar(seekTime, player.getDuration())
 }
 
 function endSeeking(e) {
-  if (!isDragging || !player) return;
+  if (!isDragging || !player) return
 
-  e.preventDefault();
+  e.preventDefault()
 
-  const progressBarRect = progressBar.getBoundingClientRect();
-  let clientX;
+  const progressBarRect = progressBar.getBoundingClientRect()
+  let clientX
 
   if (e.type.startsWith("touch")) {
-    clientX = e.changedTouches[0].clientX;
+    clientX = e.changedTouches[0].clientX
   } else {
-    clientX = e.clientX;
+    clientX = e.clientX
   }
 
-  const clickPosition =
-    (clientX - progressBarRect.left) / progressBarRect.width;
-  const seekTime =
-    player.getDuration() * Math.max(0, Math.min(1, clickPosition));
+  const clickPosition = (clientX - progressBarRect.left) / progressBarRect.width
+  const seekTime = player.getDuration() * Math.max(0, Math.min(1, clickPosition))
 
   // Seek to position
-  player.seekTo(seekTime, true);
+  player.seekTo(seekTime, true)
 
   // Emit seek event to sync with others
-  socket.emit("seek", { room, username, time: seekTime });
+  socket.emit("seek", { room, username, time: seekTime })
 
-  isDragging = false;
+  isDragging = false
 }
 
 function updateProgressBar(currentTime, duration) {
-  if (!progressBarFill || !progressBarHandle) return;
+  if (!progressBarFill || !progressBarHandle) return
 
-  const percent = (currentTime / duration) * 100;
-  progressBarFill.style.width = `${percent}%`;
-  progressBarHandle.style.left = `${percent}%`;
+  const percent = (currentTime / duration) * 100
+  progressBarFill.style.width = `${percent}%`
+  progressBarHandle.style.left = `${percent}%`
 
   // Update time displays
   if (currentTimeDisplay) {
-    currentTimeDisplay.textContent = formatTime(currentTime);
+    currentTimeDisplay.textContent = formatTime(currentTime)
   }
 
   if (totalTimeDisplay) {
-    totalTimeDisplay.textContent = formatTime(duration);
+    totalTimeDisplay.textContent = formatTime(duration)
   }
 }
 
 function formatTime(seconds) {
-  seconds = Math.floor(seconds);
-  const minutes = Math.floor(seconds / 60);
-  seconds = seconds % 60;
-  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  seconds = Math.floor(seconds)
+  const minutes = Math.floor(seconds / 60)
+  seconds = seconds % 60
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
 }
 
 function startProgressUpdater() {
   if (progressUpdateInterval) {
-    clearInterval(progressUpdateInterval);
+    clearInterval(progressUpdateInterval)
   }
 
   progressUpdateInterval = setInterval(() => {
     if (player && !isDragging) {
-      const currentTime = player.getCurrentTime() || 0;
-      const duration = player.getDuration() || 0;
-      updateProgressBar(currentTime, duration);
+      const currentTime = player.getCurrentTime() || 0
+      const duration = player.getDuration() || 0
+      updateProgressBar(currentTime, duration)
     }
-  }, 100);
+  }, 100)
 }
 
 function stopProgressUpdater() {
   if (progressUpdateInterval) {
-    clearInterval(progressUpdateInterval);
-    progressUpdateInterval = null;
+    clearInterval(progressUpdateInterval)
+    progressUpdateInterval = null
   }
 }
 
 // YouTube API functions
 function onYouTubeIframeAPIReady() {
   // YouTube API is ready, but we'll create the player when a video is selected
-  console.log("YouTube API ready");
+  console.log("YouTube API ready")
 }
 
 function createYouTubePlayer(videoId) {
   if (player) {
-    player.loadVideoById(videoId);
-    return;
+    player.loadVideoById(videoId)
+    return
   }
 
   player = new YT.Player("ytplayer", {
@@ -763,175 +836,163 @@ function createYouTubePlayer(videoId) {
       onStateChange: onPlayerStateChange,
       onError: onPlayerError,
     },
-  });
+  })
 }
 
 function onPlayerReady(event) {
-  event.target.setVolume(volumeSlider.value);
-  updateControlButtons();
-  startProgressUpdater();
+  event.target.setVolume(volumeSlider.value)
+  updateControlButtons()
+  startProgressUpdater()
 
   // Set quality if specified
-  const quality = qualitySelect.value;
+  const quality = qualitySelect.value
   if (quality === "hd") {
-    player.setPlaybackQuality("hd720");
+    player.setPlaybackQuality("hd720")
   } else if (quality === "fullhd") {
-    player.setPlaybackQuality("hd1080");
+    player.setPlaybackQuality("hd1080")
   }
 }
 
-let lastSentTime = 0;
+let lastSentTime = 0
 function onPlayerStateChange(event) {
-  updateControlButtons();
+  updateControlButtons()
 
   if (event.data === YT.PlayerState.PLAYING) {
-    const currentTime = player.getCurrentTime();
-    const diff = Math.abs(currentTime - lastSentTime);
+    const currentTime = player.getCurrentTime()
+    const diff = Math.abs(currentTime - lastSentTime)
 
     if (diff > 0.5 && !isSyncing) {
-      socket.emit("seek", { room, username, time: currentTime });
-      lastSentTime = currentTime;
+      socket.emit("seek", { room, username, time: currentTime })
+      lastSentTime = currentTime
     }
 
     // Start visualizer animation
-    startVisualizer();
-    startProgressUpdater();
+    startVisualizer()
+    startProgressUpdater()
   } else if (event.data === YT.PlayerState.PAUSED) {
     // Stop visualizer animation
-    stopVisualizer();
+    stopVisualizer()
   } else if (event.data === YT.PlayerState.ENDED) {
-    stopVisualizer();
-    stopProgressUpdater();
+    stopVisualizer()
+    stopProgressUpdater()
 
     // Auto play next video if enabled
     if (autoPlayEnabled && currentVideoIndex + 1 < videoQueue.length) {
-      currentVideoIndex = currentVideoIndex + 1;
+      currentVideoIndex = currentVideoIndex + 1
       socket.emit("queue-update", {
         room,
         queue: videoQueue,
         currentVideoIndex,
-      });
+      })
     }
   }
 }
 
 function onPlayerError(event) {
-  console.warn(`YouTube Player Error: ${event.data}`);
+  console.warn(`YouTube Player Error: ${event.data}`)
   showNotification(
     "Playback Error",
     "There was an error playing this video. Skipping to next...",
-    "fa-exclamation-triangle"
-  );
+    "fa-exclamation-triangle",
+  )
 
   // Skip to next video on error
   if (currentVideoIndex + 1 < videoQueue.length) {
-    currentVideoIndex = currentVideoIndex + 1;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
+    currentVideoIndex = currentVideoIndex + 1
+    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex })
   } else {
-    showVideoOverlay();
+    showVideoOverlay()
   }
 }
 
 // Video control functions
 function playSong() {
-  if (!player) return;
-  const currentTime = player.getCurrentTime();
-  player.playVideo();
-  socket.emit("play", { room, username, time: currentTime });
-  showNotification("Playback", `${username} started playback`, "fa-play");
+  if (!player) return
+  const currentTime = player.getCurrentTime()
+  player.playVideo()
+  socket.emit("play", { room, username, time: currentTime })
+  showNotification("Playback", `${username} started playback`, "fa-play")
 }
 
 function pauseSong() {
-  if (!player) return;
-  const currentTime = player.getCurrentTime();
-  player.pauseVideo();
-  socket.emit("pause", { room, username, time: currentTime });
-  showNotification("Playback", `${username} paused playback`, "fa-pause");
+  if (!player) return
+  const currentTime = player.getCurrentTime()
+  player.pauseVideo()
+  socket.emit("pause", { room, username, time: currentTime })
+  showNotification("Playback", `${username} paused playback`, "fa-pause")
 }
 
 function playNext() {
   if (currentVideoIndex + 1 < videoQueue.length) {
-    currentVideoIndex = currentVideoIndex + 1;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
-    showNotification(
-      "Playback",
-      `${username} skipped to next song`,
-      "fa-step-forward"
-    );
+    currentVideoIndex = currentVideoIndex + 1
+    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex })
+    showNotification("Playback", `${username} skipped to next song`, "fa-step-forward")
   }
 }
 
 function playPrevious() {
   if (currentVideoIndex - 1 >= 0) {
-    currentVideoIndex = currentVideoIndex - 1;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
-    showNotification(
-      "Playback",
-      `${username} went to previous song`,
-      "fa-step-backward"
-    );
+    currentVideoIndex = currentVideoIndex - 1
+    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex })
+    showNotification("Playback", `${username} went to previous song`, "fa-step-backward")
   }
 }
 
 function playVideoAtIndex(index, autoplay = true) {
-  if (index < 0 || index >= videoQueue.length) return;
+  if (index < 0 || index >= videoQueue.length) return
 
-  const newVideoId = videoQueue[index].videoId;
-  currentVideoIndex = index;
+  const newVideoId = videoQueue[index].videoId
+  currentVideoIndex = index
 
   if (player) {
-    player.loadVideoById(newVideoId);
+    player.loadVideoById(newVideoId)
     if (autoplay) {
-      player.playVideo();
+      player.playVideo()
     } else {
-      player.pauseVideo();
+      player.pauseVideo()
     }
   } else {
-    createYouTubePlayer(newVideoId);
+    createYouTubePlayer(newVideoId)
   }
 
-  updateQueueUI();
-  updateControlButtons();
-  updateNowPlayingInfo(videoQueue[index]);
-  hideVideoOverlay();
+  updateQueueUI()
+  updateControlButtons()
+  updateNowPlayingInfo(videoQueue[index])
+  hideVideoOverlay()
 }
 
 // Search and queue functions
 async function performSearch(query) {
   try {
     // Show loading state
-    searchResults.innerHTML = '<div class="search-loading">Searching...</div>';
-    searchResults.classList.add("active");
+    searchResults.innerHTML = '<div class="search-loading">Searching...</div>'
+    searchResults.classList.add("active")
 
-    const response = await fetch(
-      `/api/youtube/search?q=${encodeURIComponent(query)}`
-    );
-    const data = await response.json();
+    const response = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}`)
+    const data = await response.json()
 
     if (data.items && data.items.length > 0) {
-      displaySearchResults(data.items);
+      displaySearchResults(data.items)
     } else {
-      searchResults.innerHTML =
-        '<div class="empty-search">No results found</div>';
+      searchResults.innerHTML = '<div class="empty-search">No results found</div>'
     }
   } catch (error) {
-    console.error("Error searching YouTube:", error);
-    searchResults.innerHTML =
-      '<div class="search-error">Failed to search YouTube</div>';
+    console.error("Error searching YouTube:", error)
+    searchResults.innerHTML = '<div class="search-error">Failed to search YouTube</div>'
   }
 }
 
 function displaySearchResults(items) {
-  searchResults.innerHTML = "";
+  searchResults.innerHTML = ""
 
   items.forEach((item) => {
-    const videoId = item.id.videoId;
-    const title = item.snippet.title;
-    const thumbnail = item.snippet.thumbnails.medium.url;
-    const channelTitle = item.snippet.channelTitle;
+    const videoId = item.id.videoId
+    const title = item.snippet.title
+    const thumbnail = item.snippet.thumbnails.medium.url
+    const channelTitle = item.snippet.channelTitle
 
-    const resultItem = document.createElement("div");
-    resultItem.className = "search-result-item";
+    const resultItem = document.createElement("div")
+    resultItem.className = "search-result-item"
     resultItem.innerHTML = `
       <div class="search-result-thumbnail">
         <img src="${thumbnail}" alt="${title}">
@@ -940,36 +1001,28 @@ function displaySearchResults(items) {
         <div class="search-result-title">${title}</div>
         <div class="search-result-channel">${channelTitle}</div>
       </div>
-    `;
+    `
 
     resultItem.addEventListener("click", () => {
-      addVideoToQueue(videoId, title, thumbnail, channelTitle);
-      searchResults.classList.remove("active");
-    });
+      addVideoToQueue(videoId, title, thumbnail, channelTitle)
+      searchResults.classList.remove("active")
+    })
 
-    searchResults.appendChild(resultItem);
-  });
+    searchResults.appendChild(resultItem)
+  })
 }
 
 function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
   // Check if video is already in queue
   if (videoQueue.some((item) => item.videoId === videoId)) {
-    showNotification(
-      "Queue",
-      "This video is already in the queue",
-      "fa-info-circle"
-    );
-    return;
+    showNotification("Queue", "This video is already in the queue", "fa-info-circle")
+    return
   }
 
   // Limit queue length to 10 videos
   if (videoQueue.length >= 10) {
-    showNotification(
-      "Queue Limit",
-      "You can only add up to 10 videos in the queue",
-      "fa-exclamation-triangle"
-    );
-    return;
+    showNotification("Queue Limit", "You can only add up to 10 videos in the queue", "fa-exclamation-triangle")
+    return
   }
 
   const newVideo = {
@@ -978,61 +1031,61 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
     thumbnail,
     channelTitle,
     addedBy: username,
-  };
+  }
 
-  const wasEmpty = videoQueue.length === 0;
-  const newQueue = [...videoQueue, newVideo];
-  let newIndex = currentVideoIndex;
+  const wasEmpty = videoQueue.length === 0
+  const newQueue = [...videoQueue, newVideo]
+  let newIndex = currentVideoIndex
 
   // If this is the first video, set index to 0
   if (newQueue.length === 1) {
-    newIndex = 0;
+    newIndex = 0
   }
 
   // If a video is currently playing, keep currentVideoIndex unchanged to avoid restarting
   // Only update currentVideoIndex if no video is playing (currentVideoIndex === -1)
   if (currentVideoIndex === -1) {
-    newIndex = 0;
+    newIndex = 0
   } else {
-    newIndex = currentVideoIndex;
+    newIndex = currentVideoIndex
   }
 
   socket.emit("queue-update", {
     room,
     queue: newQueue,
     currentVideoIndex: newIndex,
-  });
-  showNotification("Queue", `Added "${title}" to queue`, "fa-plus");
+  })
+  showNotification("Queue", `Added "${title}" to queue`, "fa-plus")
 
   // Hide overlay if this is the first video added
   if (newQueue.length === 1) {
-    hideVideoOverlay();
+    hideVideoOverlay()
   }
 
   // If queue was empty before adding, play the new video and update now playing info
   if (wasEmpty) {
-    playVideoAtIndex(newIndex, true);
-    updateNowPlayingInfo(newVideo);
+    playVideoAtIndex(newIndex, true)
+    updateNowPlayingInfo(newVideo)
   }
 }
 
 function updateQueueUI() {
-  queueList.innerHTML = "";
-  queueCountElement.textContent = videoQueue.length;
+  queueList.innerHTML = ""
+  queueCountElement.textContent = videoQueue.length
 
   if (videoQueue.length === 0) {
     queueList.innerHTML = `
       <li class="empty-queue">
         <p>Your queue is empty. Search for videos to add.</p>
       </li>
-    `;
-    return;
+    `
+    return
   }
 
   videoQueue.forEach((video, index) => {
-    const isActive = index === currentVideoIndex;
-    const queueItem = document.createElement("li");
-    queueItem.className = `queue-item ${isActive ? "active" : ""}`;
+    const isActive = index === currentVideoIndex
+    const queueItem = document.createElement("li")
+    queueItem.className = `queue-item ${isActive ? "active" : ""}`
 
     queueItem.innerHTML = `
       <div class="queue-item-number">${index + 1}</div>
@@ -1048,95 +1101,93 @@ function updateQueueUI() {
           <i class="fas fa-times"></i>
         </button>
       </div>
-    `;
+    `
 
     // Play this video when clicked
     queueItem.addEventListener("click", (e) => {
       if (!e.target.closest(".queue-actions")) {
         // Update UI immediately
-        playVideoAtIndex(index, true);
+        playVideoAtIndex(index, true)
         // Emit socket event to sync with others
         socket.emit("queue-update", {
           room,
           queue: videoQueue,
           currentVideoIndex: index,
-        });
+        })
         // Ensure now playing info updates even if index is same
-        updateNowPlayingInfo(videoQueue[index]);
+        updateNowPlayingInfo(videoQueue[index])
       }
-    });
+    })
 
     // Remove button
-    const removeBtn = queueItem.querySelector(".remove-btn");
+    const removeBtn = queueItem.querySelector(".remove-btn")
     if (removeBtn) {
       removeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removeFromQueue(index);
-      });
+        e.stopPropagation()
+        removeFromQueue(index)
+      })
     }
 
-    queueList.appendChild(queueItem);
-  });
+    queueList.appendChild(queueItem)
+  })
 }
 
 function removeFromQueue(index) {
-  const newQueue = [...videoQueue];
-  newQueue.splice(index, 1);
+  const newQueue = [...videoQueue]
+  newQueue.splice(index, 1)
 
-  let newIndex = currentVideoIndex;
+  let newIndex = currentVideoIndex
 
   // Adjust current index if needed
   if (newQueue.length === 0) {
-    newIndex = -1;
+    newIndex = -1
   } else if (index === currentVideoIndex) {
     // If removing current playing video, play the next one or previous if last
-    newIndex = Math.min(index, newQueue.length - 1);
+    newIndex = Math.min(index, newQueue.length - 1)
   } else if (index < currentVideoIndex) {
     // If removing a video before current, adjust index
-    newIndex--;
+    newIndex--
   }
 
   socket.emit("queue-update", {
     room,
     queue: newQueue,
     currentVideoIndex: newIndex,
-  });
+  })
 }
 
 // Chat functions
 function sendChatMessage() {
-  const message = chatInput.value.trim();
-  if (!message) return;
+  const message = chatInput.value.trim()
+  if (!message) return
 
-  const timestamp = new Date().toISOString();
-  socket.emit("chat-message", { room, username, message, timestamp });
+  const timestamp = new Date().toISOString()
+  socket.emit("chat-message", { room, username, message, timestamp })
 
   // Add message to UI
-  addChatMessage(username, message, timestamp, true);
+  addChatMessage(username, message, timestamp, true)
 
   // Clear input
-  chatInput.value = "";
+  chatInput.value = ""
 }
 
 function addChatMessage(sender, message, timestamp, isOwnMessage = false) {
-  const messageElement = document.createElement("div");
-  messageElement.className = `chat-message ${
-    isOwnMessage ? "own-message" : ""
-  }`;
+  const messageElement = document.createElement("div")
+  messageElement.className = `chat-message ${isOwnMessage ? "own-message" : ""}`
 
   // Get or create user color and initials
   if (!userColors[sender]) {
-    userColors[sender] = getRandomColor();
+    userColors[sender] = getRandomColor()
   }
 
   if (!userInitials[sender]) {
-    userInitials[sender] = getInitials(sender);
+    userInitials[sender] = getInitials(sender)
   }
 
   const formattedTime = new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })
 
   messageElement.innerHTML = `
     <div class="message-avatar" style="background-color: ${userColors[sender]}">
@@ -1151,75 +1202,70 @@ function addChatMessage(sender, message, timestamp, isOwnMessage = false) {
         <span class="message-time">${formattedTime}</span>
       </div>
     </div>
-  `;
+  `
 
-  chatMessages.appendChild(messageElement);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatMessages.appendChild(messageElement)
+  chatMessages.scrollTop = chatMessages.scrollHeight
 }
 
 function addSystemMessage(message) {
-  const messageElement = document.createElement("div");
-  messageElement.className = "system-message";
+  const messageElement = document.createElement("div")
+  messageElement.className = "system-message"
 
   messageElement.innerHTML = `
     <div class="system-message-content">
       ${message}
     </div>
-  `;
+  `
 
-  chatMessages.appendChild(messageElement);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatMessages.appendChild(messageElement)
+  chatMessages.scrollTop = chatMessages.scrollHeight
 }
 
 // Emoji reactions
 function sendEmojiReaction(emoji) {
-  socket.emit("emoji-reaction", { room, username, emoji });
-  showEmojiReaction(emoji, username);
+  socket.emit("emoji-reaction", { room, username, emoji })
+  showEmojiReaction(emoji, username)
 }
 
 function showEmojiReaction(emoji, sender) {
   // Create floating emoji element
-  const reaction = document.createElement("div");
-  reaction.className = "floating-emoji";
-  reaction.textContent = emoji;
+  const reaction = document.createElement("div")
+  reaction.className = "floating-emoji"
+  reaction.textContent = emoji
 
   // Add username below emoji
-  const usernameSpan = document.createElement("span");
-  usernameSpan.textContent = sender;
-  usernameSpan.style.fontSize = "12px";
-  usernameSpan.style.display = "block";
-  usernameSpan.style.textAlign = "center";
-  usernameSpan.style.marginTop = "5px";
-  usernameSpan.textContent = sender;
-  usernameSpan.style.fontSize = "12px";
-  usernameSpan.style.display = "block";
-  usernameSpan.style.textAlign = "center";
-  usernameSpan.style.marginTop = "5px";
-  usernameSpan.style.color = "white";
-  usernameSpan.style.textShadow = "0 0 2px rgba(0,0,0,0.5)";
+  const usernameSpan = document.createElement("span")
+  usernameSpan.textContent = sender
+  usernameSpan.style.fontSize = "12px"
+  usernameSpan.style.display = "block"
+  usernameSpan.style.textAlign = "center"
+  usernameSpan.style.marginTop = "5px"
+  usernameSpan.style.color = "white"
+  usernameSpan.style.textShadow = "0 0 2px rgba(0,0,0,0.5)"
 
-  reaction.appendChild(usernameSpan);
+  reaction.appendChild(usernameSpan)
 
   // Position randomly over the video player
-  const videoContainer = document.querySelector(".video-container");
-  const rect = videoContainer.getBoundingClientRect();
+  const videoContainer = document.querySelector(".video-container")
+  const rect = videoContainer.getBoundingClientRect()
 
-  const x = Math.random() * (rect.width - 50) + rect.left;
-  const y = Math.random() * (rect.height - 100) + rect.top;
+  const x = Math.random() * (rect.width - 50) + rect.left
+  const y = Math.random() * (rect.height - 100) + rect.top
 
-  reaction.style.position = "absolute";
-  reaction.style.left = `${x}px`;
-  reaction.style.top = `${y}px`;
-  reaction.style.fontSize = "32px";
-  reaction.style.zIndex = "1000";
+  reaction.style.position = "absolute"
+  reaction.style.left = `${x}px`
+  reaction.style.top = `${y}px`
+  reaction.style.fontSize = "32px"
+  reaction.style.zIndex = "1000"
 
   // Add to document
-  document.body.appendChild(reaction);
+  document.body.appendChild(reaction)
 
   // Animate and remove after animation
   setTimeout(() => {
-    reaction.remove();
-  }, 3000);
+    reaction.remove()
+  }, 3000)
 }
 
 // UI update functions
@@ -1544,6 +1590,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.body.appendChild(mobileSidebarToggle);
   }
+
+  // Define the missing initOrientationFeatures function
+  window.initOrientationFeatures = function() {
+    function enhanceOrientationExperience() {
+      const isLandscape = window.innerWidth > window.innerHeight;
+
+      // Adjust UI elements based on orientation
+      if (isLandscape) {
+        // Landscape optimizations
+        const playerControls = document.querySelector('.player-controls');
+        if (playerControls) {
+          playerControls.style.display = 'flex';
+          playerControls.style.justifyContent = 'center';
+          playerControls.style.marginTop = '12px';
+        }
+
+        const visualizer = document.querySelector('.visualizer-container');
+        if (visualizer) {
+          visualizer.style.height = '120px';
+        }
+      } else {
+        // Portrait optimizations
+        const playerControls = document.querySelector('.player-controls');
+        if (playerControls) {
+          playerControls.style.display = '';
+          playerControls.style.justifyContent = '';
+          playerControls.style.marginTop = '';
+        }
+
+        const visualizer = document.querySelector('.visualizer-container');
+        if (visualizer) {
+          visualizer.style.height = '80px';
+        }
+      }
+    }
+
+    // Run on load and orientation change
+    enhanceOrientationExperience();
+    window.addEventListener('orientationchange', enhanceOrientationExperience);
+    window.addEventListener('resize', enhanceOrientationExperience);
+  };
 });
 
 document.addEventListener("DOMContentLoaded", () => {

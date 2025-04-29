@@ -187,18 +187,29 @@
               </div>
             </div>
           </div>
-
-
-
-        
-
-
       </section>
 
+      <div class="sidebar-navigation">
+        <button id="sidebarArrowBtn" class="sidebar-arrow-button">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="sidebar-dropdown">
+          <div class="dropdown-item" data-panel="queue">
+            <i class="fas fa-music"></i>
+            <span>Queue</span>
+          </div>
+          <div class="dropdown-item" data-panel="chat">
+            <i class="fas fa-comment"></i>
+            <span>Chat</span>
+          </div>
+          <div class="dropdown-item" data-panel="settings">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </div>
+        </div>
+      </div>
       <!-- Sidebar container -->
       <div class="sidebar-container">
-        <!-- Sidebar tabs -->
-        <!-- Sidebar content -->
         <div class="sidebar-content">
           <!-- Queue tab -->
           <div class="sidebar-panel active" id="queuePanel">
@@ -341,33 +352,165 @@
     <!-- Notifications area -->
     <div id="notificationsContainer" class="notifications-container"></div>
   </div>
-
-  <!-- Scripts -->
-   <!-- Add this script at the end of the body tag to ensure it runs after the page loads -->
-<script>
-  // This script ensures the responsive UI is initialized when the room page loads
-  document.addEventListener('DOMContentLoaded', function() {
-    // Check if initResponsiveUI exists (it should be defined in client.js)
-    if (typeof initResponsiveUI === 'function') {
-      initResponsiveUI();
-    } else {
-      // If not defined yet, wait for client.js to load
-      const checkInterval = setInterval(function() {
-        if (typeof initResponsiveUI === 'function') {
-          initResponsiveUI();
-          clearInterval(checkInterval);
-        }
-      }, 100);
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const sidebarContainer = document.querySelector('.sidebar-container');
+      const sidebarContent = document.querySelector('.sidebar-content');
+      const sidebarArrowBtn = document.getElementById('sidebarArrowBtn');
+      const sidebarDropdown = document.querySelector('.sidebar-dropdown');
+      const dropdownItems = document.querySelectorAll('.dropdown-item');
+      const sidebarPanels = document.querySelectorAll('.sidebar-panel');
       
-      // Stop checking after 5 seconds to prevent infinite loop
-      setTimeout(function() {
-        clearInterval(checkInterval);
-      }, 5000);
-    }
-  });
-
+      // State
+      let isSidebarOpen = false;
+      let currentPanel = 'queue'; // Default panel
+      
+      // Functions
+      function toggleSidebar(open, panel) {
+        if (open) {
+          sidebarContainer.classList.remove('sidebar-collapsed');
+          document.body.classList.remove('sidebar-collapsed');
+          isSidebarOpen = true;
+          sidebarArrowBtn.querySelector('i').classList.remove('fa-chevron-right');
+          sidebarArrowBtn.querySelector('i').classList.add('fa-chevron-left');
+        } else {
+          sidebarContainer.classList.add('sidebar-collapsed');
+          document.body.classList.add('sidebar-collapsed');
+          isSidebarOpen = false;
+          sidebarArrowBtn.querySelector('i').classList.remove('fa-chevron-left');
+          sidebarArrowBtn.querySelector('i').classList.add('fa-chevron-right');
+        }
+        
+        if (panel) {
+          showPanel(panel);
+        }
+      }
+      
+      function showPanel(panelId) {
+        // Hide all panels
+        sidebarPanels.forEach(panel => {
+          panel.classList.remove('active');
+        });
+        
+        // Show selected panel
+        const selectedPanel = document.querySelector(`.sidebar-panel[data-panel="${panelId}"]`);
+        if (selectedPanel) {
+          selectedPanel.classList.add('active');
+          currentPanel = panelId;
+          
+          // Update active state in dropdown
+          dropdownItems.forEach(item => {
+            if (item.dataset.panel === panelId) {
+              item.classList.add('active');
+            } else {
+              item.classList.remove('active');
+            }
+          });
+        }
+      }
+      
+      // Event Listeners
+      sidebarArrowBtn.addEventListener('click', function() {
+        console.log('Sidebar arrow button clicked');
+        toggleSidebar(!isSidebarOpen, 'queue'); // Default to queue when toggling
+      });
+      
+      // Show dropdown on hover
+      sidebarArrowBtn.addEventListener('mouseenter', function() {
+        sidebarDropdown.classList.add('show');
+      });
+      
+      // Hide dropdown when mouse leaves the navigation area
+      document.querySelector('.sidebar-navigation').addEventListener('mouseleave', function() {
+        sidebarDropdown.classList.remove('show');
+      });
+      
+      // Handle dropdown item clicks
+      dropdownItems.forEach(item => {
+        item.addEventListener('click', function() {
+          const panelId = this.dataset.panel;
+          if (!isSidebarOpen) {
+            toggleSidebar(true, panelId);
+          } else {
+            showPanel(panelId);
+          }
+          sidebarDropdown.classList.remove('show');
+        });
+      });
+      
+      // Initialize
+      // Make sure your sidebar panels have the data-panel attribute matching the dropdown items
+      document.querySelectorAll('.sidebar-panel').forEach((panel, index) => {
+        if (index === 0) panel.dataset.panel = 'queue';
+        if (index === 1) panel.dataset.panel = 'chat';
+        if (index === 2) panel.dataset.panel = 'settings';
+      });
+      
+      // Set initial state
+      toggleSidebar(true);
+      
+      // If you have existing tab buttons, you might want to hide them
+      const existingTabs = document.querySelector('.sidebar-tabs');
+      if (existingTabs) {
+        existingTabs.style.display = 'none';
+      }
+    });
   </script>
-
+  <script>
+    // This script ensures the orientation features are initialized when the room page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if initOrientationFeatures exists (it should be defined in client.js)
+      if (typeof initOrientationFeatures === 'function') {
+        initOrientationFeatures();
+      } else {
+        // If not defined yet, wait for client.js to load
+        const checkInterval = setInterval(function() {
+          if (typeof initOrientationFeatures === 'function') {
+            initOrientationFeatures();
+            clearInterval(checkInterval);
+          }
+        }, 100);
+        
+        // Stop checking after 5 seconds to prevent infinite loop
+        setTimeout(function() {
+          clearInterval(checkInterval);
+        }, 5000);
+      }
+      
+      // Additional orientation-specific enhancements
+      function enhanceOrientationExperience() {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        
+        // Adjust UI elements based on orientation
+        if (isLandscape) {
+          // Landscape optimizations
+          const playerControls = document.querySelector('.player-controls');
+          if (playerControls) {
+            playerControls.style.display = 'flex';
+            playerControls.style.justifyContent = 'center';
+            playerControls.style.marginTop = '12px';
+          }
+          
+          const visualizer = document.querySelector('.visualizer-container');
+          if (visualizer) {
+            visualizer.style.height = '120px';
+          }
+        } else {
+          // Portrait optimizations
+          const visualizer = document.querySelector('.visualizer-container');
+          if (visualizer) {
+            visualizer.style.height = '80px';
+          }
+        }
+      }
+      
+      // Run on load and orientation change
+      enhanceOrientationExperience();
+      window.addEventListener('orientationchange', enhanceOrientationExperience);
+      window.addEventListener('resize', enhanceOrientationExperience);
+    });
+  </script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="client.js"></script>
