@@ -4,7 +4,7 @@ let localStream
 let peerConnection
 let isSyncing = false
 let autoPlayEnabled = false
-const isCallActive = false
+let isCallActive = false
 let videoQueue = []
 let currentVideoIndex = -1
 let isDragging = false
@@ -64,19 +64,20 @@ socket.on("reconnect_failed", () => {
 
 // Wrap RTCPeerConnection to add logging for ICE connection state changes
 const originalRTCPeerConnection = window.RTCPeerConnection
-window.RTCPeerConnection = (config) => {
-  const pc = new originalRTCPeerConnection(config)
+class LoggingRTCPeerConnection extends originalRTCPeerConnection {
+  constructor(config) {
+    super(config)
 
-  pc.addEventListener("iceconnectionstatechange", () => {
-    console.log("[WebRTC] ICE connection state:", pc.iceConnectionState)
-  })
+    this.addEventListener("iceconnectionstatechange", () => {
+      console.log("[WebRTC] ICE connection state:", this.iceConnectionState)
+    })
 
-  pc.addEventListener("icecandidateerror", (event) => {
-    console.error("[WebRTC] ICE candidate error:", event)
-  })
-
-  return pc
+    this.addEventListener("icecandidateerror", (event) => {
+      console.error("[WebRTC] ICE candidate error:", event)
+    })
+  }
 }
+window.RTCPeerConnection = LoggingRTCPeerConnection
 
 // DOM Elements
 const volumeSlider = document.getElementById("volumeSlider")
@@ -121,29 +122,22 @@ function initApp() {
   // Set room and user information
   roomNameElement.textContent = room
   userNameElement.textContent = username
-
   // Generate user avatar with initials
   const initials = getInitials(username)
   userInitials[username] = initials
   userAvatarElement.textContent = initials
-
   // Generate a random color for the user
   const userColor = getRandomColor()
   userColors[username] = userColor
   userAvatarElement.style.backgroundColor = userColor
-
   // Join the room
   socket.emit("join-room", { room, username })
-
   // Setup event listeners
   setupEventListeners()
-
   // Initialize theme
   initializeTheme()
-
   // Initialize sidebar navigation
   initSidebarNavigation()
-
   // Show notification
   showNotification("Welcome to VibeRoom", `You've joined room "${room}"`, "fa-music")
 }
@@ -235,10 +229,8 @@ function setupEventListeners() {
 
   // Theater mode button
   theaterModeBtn.addEventListener("click", toggleTheaterMode)
-
   // Fullscreen button
   fullscreenBtn.addEventListener("click", toggleFullscreen)
-
   // Theme selector
   themeSelect.addEventListener("change", () => {
     setTheme(themeSelect.value)
@@ -1495,21 +1487,7 @@ function getInitials(name) {
 }
 
 function getRandomColor() {
-  const colors = [
-    "#8e44ad",
-    "#9b59b6",
-    "#2980b9",
-    "#3498db",
-    "#16a085",
-    "#27ae60",
-    "#f39c12",
-    "#e67e22",
-    "#c0392b",
-    "#e74c3c",
-    "#1abc9c",
-    "#2ecc71",
-  ];
-
+  const colors = ["#8e44ad","#9b59b6","#2980b9","#3498db","#16a085","#27ae60","#f39c12","#e67e22","#c0392b","#e74c3c","#1abc9c","#2ecc71"];
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
@@ -1531,7 +1509,6 @@ function createVisualizer() {
     visualizerContainer.appendChild(bar);
     visualizerBars.push(bar);
   }
-
   document.querySelector(".video-container").appendChild(visualizerContainer);
 }
 
@@ -1539,7 +1516,6 @@ function startVisualizer() {
   if (!visualizerContainer) {
     createVisualizer();
   }
-
   visualizerContainer.style.display = "flex";
   animateVisualizer();
 }
@@ -1549,7 +1525,6 @@ function stopVisualizer() {
     cancelAnimationFrame(visualizerAnimationId);
     visualizerAnimationId = null;
   }
-
   if (visualizerContainer) {
     visualizerContainer.style.display = "none";
   }
@@ -1560,7 +1535,6 @@ function animateVisualizer() {
     const height = Math.floor(Math.random() * 30) + 5;
     bar.style.height = `${height}px`;
   });
-
   visualizerAnimationId = requestAnimationFrame(animateVisualizer);
 }
 
@@ -1568,7 +1542,6 @@ function animateVisualizer() {
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
   setupSocketListeners();
-
   // Close search results when clicking outside
   document.addEventListener("click", (e) => {
     if (
@@ -1595,7 +1568,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.initOrientationFeatures = function() {
     function enhanceOrientationExperience() {
       const isLandscape = window.innerWidth > window.innerHeight;
-
       // Adjust UI elements based on orientation
       if (isLandscape) {
         // Landscape optimizations
@@ -1605,7 +1577,6 @@ document.addEventListener("DOMContentLoaded", () => {
           playerControls.style.justifyContent = 'center';
           playerControls.style.marginTop = '12px';
         }
-
         const visualizer = document.querySelector('.visualizer-container');
         if (visualizer) {
           visualizer.style.height = '120px';
@@ -1618,14 +1589,12 @@ document.addEventListener("DOMContentLoaded", () => {
           playerControls.style.justifyContent = '';
           playerControls.style.marginTop = '';
         }
-
         const visualizer = document.querySelector('.visualizer-container');
         if (visualizer) {
           visualizer.style.height = '80px';
         }
       }
     }
-
     // Run on load and orientation change
     enhanceOrientationExperience();
     window.addEventListener('orientationchange', enhanceOrientationExperience);
