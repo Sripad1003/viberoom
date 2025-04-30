@@ -825,6 +825,20 @@ img {
   font-weight: 500;
 }
 
+.add-to-queue-button {
+  background-color: #4caf50; /* Green background */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-to-queue-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
 .member-bio {
   color: rgba(255, 255, 255, 0.8);
   margin-bottom: var(--spacing-lg);

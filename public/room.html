@@ -27,10 +27,7 @@
         </div>
         <div class="room-details">
           <h2 id="roomName" style="display: inline-block; margin-right: 8px;">Loading room...</h2>
-          <button
-            id="copyRoomBtn"
-            title="Copy Room ID"
-            style="
+          <button id="copyRoomBtn" title="Copy Room ID" style="
               background: transparent;
               border: none;
               cursor: pointer;
@@ -38,14 +35,10 @@
               color: #555;
               vertical-align: middle;
               transition: color 0.3s ease;
-            "
-            aria-label="Copy Room ID"
-          >
+            " aria-label="Copy Room ID">
             📋
           </button>
-          <span
-            id="copyConfirmation"
-            style="
+          <span id="copyConfirmation" style="
               display: inline-block;
               margin-left: 8px;
               background-color: #4caf50;
@@ -57,8 +50,7 @@
               pointer-events: none;
               transition: opacity 0.3s ease;
               vertical-align: middle;
-            "
-          >
+            ">
             Copied!
           </span>
           <div class="room-status">
@@ -135,58 +127,58 @@
           </div>
         </div>
 
-          <div class="player-controls">
-            <button id="emojiToggleBtn" class="emoji-toggle-button" title="Show emojis">
-              <i class="fas fa-smile"></i>
+        <div class="player-controls">
+          <button id="emojiToggleBtn" class="emoji-toggle-button" title="Show emojis">
+            <i class="fas fa-smile"></i>
+          </button>
+          <div id="emojiPopup" class="emoji-popup hidden">
+            <button class="emoji-button" data-emoji="👍">👍</button>
+            <button class="emoji-button" data-emoji="❤️">❤️</button>
+            <button class="emoji-button" data-emoji="😂">😂</button>
+            <button class="emoji-button" data-emoji="🔥">🔥</button>
+            <button class="emoji-button" data-emoji="🎵">🎵</button>
+            <button class="emoji-button" data-emoji="🎧">🎧</button>
+            <button class="emoji-button" data-emoji="🎸">🎸</button>
+            <button class="emoji-button" data-emoji="👏">👏</button>
+          </div>
+
+          <div class="playback-controls">
+            <button id="prevButton" class="control-button" onclick="playPrevious()" title="Previous">
+              <i class="fas fa-step-backward"></i>
             </button>
-            <div id="emojiPopup" class="emoji-popup hidden">
-              <button class="emoji-button" data-emoji="👍">👍</button>
-              <button class="emoji-button" data-emoji="❤️">❤️</button>
-              <button class="emoji-button" data-emoji="😂">😂</button>
-              <button class="emoji-button" data-emoji="🔥">🔥</button>
-              <button class="emoji-button" data-emoji="🎵">🎵</button>
-              <button class="emoji-button" data-emoji="🎧">🎧</button>
-              <button class="emoji-button" data-emoji="🎸">🎸</button>
-              <button class="emoji-button" data-emoji="👏">👏</button>
-            </div>
+            <button id="playButton" class="control-button primary" onclick="playSong()" title="Play">
+              <i class="fas fa-play"></i>
+            </button>
+            <button id="pauseButton" class="control-button primary" onclick="pauseSong()" title="Pause">
+              <i class="fas fa-pause"></i>
+            </button>
+            <button id="nextButton" class="control-button" onclick="playNext()" title="Next">
+              <i class="fas fa-step-forward"></i>
+            </button>
+          </div>
 
-            <div class="playback-controls">
-              <button id="prevButton" class="control-button" onclick="playPrevious()" title="Previous">
-                <i class="fas fa-step-backward"></i>
-              </button>
-              <button id="playButton" class="control-button primary" onclick="playSong()" title="Play">
-                <i class="fas fa-play"></i>
-              </button>
-              <button id="pauseButton" class="control-button primary" onclick="pauseSong()" title="Pause">
-                <i class="fas fa-pause"></i>
-              </button>
-              <button id="nextButton" class="control-button" onclick="playNext()" title="Next">
-                <i class="fas fa-step-forward"></i>
-              </button>
-            </div>
+          <div class="volume-control">
+            <i class="fas fa-volume-down"></i>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" class="slider" />
+            <i class="fas fa-volume-up"></i>
+          </div>
 
-            <div class="volume-control">
-              <i class="fas fa-volume-down"></i>
-              <input type="range" id="volumeSlider" min="0" max="100" value="50" class="slider" />
-              <i class="fas fa-volume-up"></i>
-            </div>
+          <div class="extra-controls">
+            <label class="toggle-container" title="Auto play next song">
+              <input type="checkbox" id="autoPlayToggle" />
+              <span class="toggle-label">Auto Play</span>
+            </label>
 
-            <div class="extra-controls">
-              <label class="toggle-container" title="Auto play next song">
-                <input type="checkbox" id="autoPlayToggle" />
-                <span class="toggle-label">Auto Play</span>
-              </label>
-
-              <div class="voice-chat-controls">
-                <button id="startCallBtn" class="voice-button" onclick="startCall()" title="Start voice chat">
-                  <i class="fas fa-microphone"></i>
-                </button>
-                <button id="endCallBtn" class="voice-button disabled" onclick="endCall()" title="End voice chat">
-                  <i class="fas fa-microphone-slash"></i>
-                </button>
-              </div>
+            <div class="voice-chat-controls">
+              <button id="startCallBtn" class="voice-button" onclick="startCall()" title="Start voice chat">
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button id="endCallBtn" class="voice-button disabled" onclick="endCall()" title="End voice chat">
+                <i class="fas fa-microphone-slash"></i>
+              </button>
             </div>
           </div>
+        </div>
       </section>
 
       <div class="sidebar-navigation">
@@ -352,8 +344,12 @@
     <!-- Notifications area -->
     <div id="notificationsContainer" class="notifications-container"></div>
   </div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="client.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Elements
       const sidebarContainer = document.querySelector('.sidebar-container');
       const sidebarContent = document.querySelector('.sidebar-content');
@@ -361,11 +357,11 @@
       const sidebarDropdown = document.querySelector('.sidebar-dropdown');
       const dropdownItems = document.querySelectorAll('.dropdown-item');
       const sidebarPanels = document.querySelectorAll('.sidebar-panel');
-      
+
       // State
       let isSidebarOpen = false;
       let currentPanel = 'queue'; // Default panel
-      
+
       // Functions
       function toggleSidebar(open, panel) {
         if (open) {
@@ -381,24 +377,24 @@
           sidebarArrowBtn.querySelector('i').classList.remove('fa-chevron-left');
           sidebarArrowBtn.querySelector('i').classList.add('fa-chevron-right');
         }
-        
+
         if (panel) {
           showPanel(panel);
         }
       }
-      
+
       function showPanel(panelId) {
         // Hide all panels
         sidebarPanels.forEach(panel => {
           panel.classList.remove('active');
         });
-        
+
         // Show selected panel
         const selectedPanel = document.querySelector(`.sidebar-panel[data-panel="${panelId}"]`);
         if (selectedPanel) {
           selectedPanel.classList.add('active');
           currentPanel = panelId;
-          
+
           // Update active state in dropdown
           dropdownItems.forEach(item => {
             if (item.dataset.panel === panelId) {
@@ -409,26 +405,26 @@
           });
         }
       }
-      
+
       // Event Listeners
-      sidebarArrowBtn.addEventListener('click', function() {
+      sidebarArrowBtn.addEventListener('click', function () {
         console.log('Sidebar arrow button clicked');
         toggleSidebar(!isSidebarOpen, 'queue'); // Default to queue when toggling
       });
-      
+
       // Show dropdown on hover
-      sidebarArrowBtn.addEventListener('mouseenter', function() {
+      sidebarArrowBtn.addEventListener('mouseenter', function () {
         sidebarDropdown.classList.add('show');
       });
-      
+
       // Hide dropdown when mouse leaves the navigation area
-      document.querySelector('.sidebar-navigation').addEventListener('mouseleave', function() {
+      document.querySelector('.sidebar-navigation').addEventListener('mouseleave', function () {
         sidebarDropdown.classList.remove('show');
       });
-      
+
       // Handle dropdown item clicks
       dropdownItems.forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
           const panelId = this.dataset.panel;
           if (!isSidebarOpen) {
             toggleSidebar(true, panelId);
@@ -438,7 +434,7 @@
           sidebarDropdown.classList.remove('show');
         });
       });
-      
+
       // Initialize
       // Make sure your sidebar panels have the data-panel attribute matching the dropdown items
       document.querySelectorAll('.sidebar-panel').forEach((panel, index) => {
@@ -446,10 +442,10 @@
         if (index === 1) panel.dataset.panel = 'chat';
         if (index === 2) panel.dataset.panel = 'settings';
       });
-      
+
       // Set initial state
       toggleSidebar(true);
-      
+
       // If you have existing tab buttons, you might want to hide them
       const existingTabs = document.querySelector('.sidebar-tabs');
       if (existingTabs) {
@@ -459,29 +455,29 @@
   </script>
   <script>
     // This script ensures the orientation features are initialized when the room page loads
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Check if initOrientationFeatures exists (it should be defined in client.js)
       if (typeof initOrientationFeatures === 'function') {
         initOrientationFeatures();
       } else {
         // If not defined yet, wait for client.js to load
-        const checkInterval = setInterval(function() {
+        const checkInterval = setInterval(function () {
           if (typeof initOrientationFeatures === 'function') {
             initOrientationFeatures();
             clearInterval(checkInterval);
           }
         }, 100);
-        
+
         // Stop checking after 5 seconds to prevent infinite loop
-        setTimeout(function() {
+        setTimeout(function () {
           clearInterval(checkInterval);
         }, 5000);
       }
-      
+
       // Additional orientation-specific enhancements
       function enhanceOrientationExperience() {
         const isLandscape = window.innerWidth > window.innerHeight;
-        
+
         // Adjust UI elements based on orientation
         if (isLandscape) {
           // Landscape optimizations
@@ -491,7 +487,7 @@
             playerControls.style.justifyContent = 'center';
             playerControls.style.marginTop = '12px';
           }
-          
+
           const visualizer = document.querySelector('.visualizer-container');
           if (visualizer) {
             visualizer.style.height = '120px';
@@ -504,16 +500,13 @@
           }
         }
       }
-      
+
       // Run on load and orientation change
       enhanceOrientationExperience();
       window.addEventListener('orientationchange', enhanceOrientationExperience);
       window.addEventListener('resize', enhanceOrientationExperience);
     });
   </script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="client.js"></script>
 
   <script>
     // Copy room ID button handler
@@ -536,5 +529,4 @@
     });
   </script>
 </body>
-
 </html>
