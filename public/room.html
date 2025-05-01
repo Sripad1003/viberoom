@@ -164,11 +164,6 @@
           </div>
 
           <div class="extra-controls">
-            <label class="toggle-container" title="Auto play next song">
-              <input type="checkbox" id="autoPlayToggle" />
-              <span class="toggle-label">Auto Play</span>
-            </label>
-
             <div class="voice-chat-controls">
               <button id="startCallBtn" class="voice-button" onclick="startCall()" title="Start voice chat">
                 <i class="fas fa-microphone"></i>
@@ -263,7 +258,6 @@
                 <select id="themeSelect" class="setting-control">
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
-                  <option value="system">System Default</option>
                 </select>
               </div>
 
@@ -344,7 +338,7 @@
     <!-- Notifications area -->
     <div id="notificationsContainer" class="notifications-container"></div>
   </div>
-  
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="client.js"></script>
@@ -529,4 +523,5 @@
     });
   </script>
 </body>
+
 </html>

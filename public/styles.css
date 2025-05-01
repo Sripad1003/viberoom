@@ -825,19 +825,6 @@ img {
   font-weight: 500;
 }
 
-.add-to-queue-button {
-  background-color: #4caf50; /* Green background */
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.add-to-queue-button:hover {
-  background-color: #45a049; /* Darker green on hover */
-}
 
 .member-bio {
   color: rgba(255, 255, 255, 0.8);
@@ -1207,7 +1194,8 @@ footer {
 .video-container {
   position: relative;
   width: 100%;
-  padding-top: 40%; /* 16:9 aspect ratio */
+  padding-top: 40%;
+  /* 16:9 aspect ratio */
   background-color: #000;
   border-radius: var(--border-radius);
   overflow: hidden;
@@ -1270,13 +1258,11 @@ footer {
   left: 0;
   width: 100%;
   height: 95%;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.5) 0%,
-    transparent 30%,
-    transparent 70%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      transparent 30%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.5) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 6;
@@ -1449,10 +1435,12 @@ footer {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -1651,6 +1639,7 @@ footer {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -1731,6 +1720,7 @@ footer {
     transform: translateY(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateY(-100px) scale(1.2);
     opacity: 0;
@@ -1895,6 +1885,37 @@ footer {
 .search-result-channel {
   font-size: 0.8rem;
   color: var(--text-lighter);
+}
+
+.search-close-button {
+  background: transparent;
+  border: none;
+  color: var(--primary-light);
+  font-size: 35px;
+  font-weight: bold;
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  user-select: none;
+}
+
+.search-close-button:hover {
+  color: var(--primary-dark)
+}
+
+.add-to-queue-button {
+  background-color: var(--primary-light);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-to-queue-button:hover {
+  background-color: var(--primary-dark);
 }
 
 .queue-container {
@@ -2249,11 +2270,11 @@ footer {
   border-radius: 50%;
 }
 
-.switch input:checked + .slider {
+.switch input:checked+.slider {
   background-color: var(--primary-color);
 }
 
-.switch input:checked + .slider:before {
+.switch input:checked+.slider:before {
   transform: translateX(26px);
 }
 
@@ -2334,6 +2355,7 @@ footer {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -2344,6 +2366,7 @@ footer {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -2353,6 +2376,7 @@ footer {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -2488,7 +2512,7 @@ footer {
   :root {
     --sidebar-width: 300px;
   }
-  
+
   .hero-section,
   .about-section,
   .features-section,
@@ -2498,11 +2522,11 @@ footer {
     padding-left: var(--spacing-lg);
     padding-right: var(--spacing-lg);
   }
-  
+
   .hero-title {
     font-size: 3rem;
   }
-  
+
   .section-header h2 {
     font-size: 2.2rem;
   }
@@ -2522,42 +2546,42 @@ footer {
     overflow-y: scroll;
     flex-wrap: wrap;
   }
-  
+
   .hero-section {
     flex-direction: column;
     padding: 120px var(--spacing-lg) 60px;
     text-align: center;
   }
-  
+
   .hero-content {
     max-width: 100%;
   }
-  
+
   .hero-cta {
     justify-content: center;
   }
-  
+
   .hero-stats {
     justify-content: center;
   }
-  
+
   .about-content {
     flex-direction: column;
   }
-  
+
   .about-text {
     order: 2;
   }
-  
+
   .about-image {
     order: 1;
     margin-bottom: var(--spacing-xl);
   }
-  
+
   .team-members {
     gap: var(--spacing-lg);
   }
-  
+
   .sidebar-navigation {
     top: 70px;
     transform: none;
@@ -2580,57 +2604,57 @@ footer {
     transition: transform 0.3s ease, opacity 0.3s ease;
     z-index: 1000;
   }
-  
+
   .nav-links.active {
     transform: translateY(0);
     opacity: 1;
     pointer-events: all;
   }
-  
+
   .mobile-menu-toggle {
     display: block;
   }
-  
+
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .hero-subtitle {
     font-size: 1.1rem;
   }
-  
+
   .hero-cta {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .hero-stats {
     flex-wrap: wrap;
     gap: var(--spacing-lg);
   }
-  
+
   .section-header h2 {
     font-size: 2rem;
   }
-  
+
   .step {
     flex-direction: column;
   }
-  
+
   .step-number {
     margin-bottom: var(--spacing-md);
   }
-  
+
   .footer-content {
     flex-direction: column;
     gap: var(--spacing-xl);
   }
-  
+
   .footer-links {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   /* Sidebar styles for mobile */
   .sidebar {
     position: fixed;
@@ -2713,7 +2737,7 @@ footer {
     cursor: pointer;
     color: var(--text-color);
   }
-  
+
   .sidebar-dropdown.show {
     width: 200px;
   }
@@ -2723,20 +2747,20 @@ footer {
   .hero-title {
     font-size: 2.2rem;
   }
-  
+
   .section-header h2 {
     font-size: 1.8rem;
   }
-  
+
   .features {
     grid-template-columns: 1fr;
   }
-  
+
   .team-members {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .footer-links {
     flex-direction: column;
     gap: var(--spacing-xl);
@@ -2781,7 +2805,7 @@ footer {
     height: 36px;
     font-size: 1rem;
   }
-  
+
   .emoji-popup {
     width: 120px;
     bottom: 35px;
@@ -2811,7 +2835,7 @@ footer {
     height: 75%;
     width: 100%;
   }
-  
+
   .hero-title {
     font-size: 2rem;
   }
@@ -2966,12 +2990,15 @@ footer {
   0% {
     transform: rotate(0deg);
   }
+
   20% {
     transform: rotate(90deg);
   }
+
   80% {
     transform: rotate(90deg);
   }
+
   100% {
     transform: rotate(0deg);
   }
@@ -2993,6 +3020,7 @@ footer {
 
 /* Hide on larger screens */
 @media screen and (min-width: 769px) {
+
   .portrait-lock-toggle,
   .orientation-notification {
     display: none !important;

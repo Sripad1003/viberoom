@@ -57,6 +57,8 @@ io.on("connection", (socket) => {
         users: [],
         queue: [],
         currentVideoIndex: -1,
+        currentTime: 0,
+        isPlaying: false,
       };
     }
 
@@ -65,10 +67,12 @@ io.on("connection", (socket) => {
 
     console.log(`[${username}] joined room: ${room}`);
 
-    // Send current queue and current video index to the new user
+    // Send current queue, current video index, current time, and play state to the new user
     socket.emit("queue-update", {
       queue: rooms[room].queue,
       currentVideoIndex: rooms[room].currentVideoIndex,
+      currentTime: rooms[room].currentTime,
+      isPlaying: rooms[room].isPlaying,
     });
 
     // Broadcast updated user list to all clients in the room
@@ -84,13 +88,18 @@ io.on("connection", (socket) => {
     if (!room || queue == null || currentVideoIndex == null) return;
 
     if (!rooms[room]) {
-      rooms[room] = { users: [], queue: [], currentVideoIndex: -1 };
+      rooms[room] = { users: [], queue: [], currentVideoIndex: -1, isPlaying: false };
     }
 
     rooms[room].queue = queue;
     rooms[room].currentVideoIndex = currentVideoIndex;
 
-    io.in(room).emit("queue-update", { queue, currentVideoIndex });
+    // If queue is not empty and isPlaying is false, set isPlaying to true to enable autoplay on reload
+    if (queue.length > 0 && !rooms[room].isPlaying) {
+      rooms[room].isPlaying = true;
+    }
+
+    io.in(room).emit("queue-update", { queue, currentVideoIndex, isPlaying: rooms[room].isPlaying });
   });
 
   socket.on("video-change", ({ room, videoId, username }) => {
@@ -114,12 +123,26 @@ io.on("connection", (socket) => {
   socket.on("play", ({ room, time, username }) => {
     if (!room || time == null || !username) return;
 
+    if (!rooms[room]) {
+      rooms[room] = { users: [], queue: [], currentVideoIndex: -1, currentTime: 0, isPlaying: false };
+    }
+
+    rooms[room].currentTime = time;
+    rooms[room].isPlaying = true;
+
     console.log(`[${username}] PLAY in room ${room} at ${time.toFixed(2)}s`);
     socket.to(room).emit("play", { time, username });
   });
 
   socket.on("pause", ({ room, time, username }) => {
     if (!room || time == null || !username) return;
+
+    if (!rooms[room]) {
+      rooms[room] = { users: [], queue: [], currentVideoIndex: -1, currentTime: 0, isPlaying: false };
+    }
+
+    rooms[room].currentTime = time;
+    rooms[room].isPlaying = false;
 
     console.log(`[${username}] PAUSE in room ${room} at ${time.toFixed(2)}s`);
     socket.to(room).emit("pause", { time, username });
@@ -168,6 +191,12 @@ io.on("connection", (socket) => {
 
   socket.on("seek", ({ time, username, room }) => {
     if (!room || time == null || !username) return;
+
+    if (!rooms[room]) {
+      rooms[room] = { users: [], queue: [], currentVideoIndex: -1, currentTime: 0, isPlaying: false };
+    }
+
+    rooms[room].currentTime = time;
 
     console.log(`[${username}] SEEK to ${time.toFixed(2)}s in room ${room}`);
     socket.to(room).emit("seek", { time, username });
