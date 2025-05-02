@@ -7,76 +7,413 @@
     <link rel="stylesheet" href="styles.css" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
     />
   </head>
   <body>
-    <div class="landing-container">
-      <div class="landing-content">
-        <div class="logo-container">
-          <div class="logo">
-            <span class="logo-icon">🎵</span>
-            <span class="logo-text">VibeRoom</span>
-          </div>
-          <p class="tagline">Share the music vibe, together.</p>
+    <!-- Navigation -->
+    <nav class="landing-nav">
+      <div class="nav-container">
+        <div class="logo">
+          <span class="logo-icon"><i class="fas fa-headphones-alt"></i></span>
+          <span class="logo-text">VibeRoom</span>
         </div>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
+          <!-- <a href="#team">Team</a> -->
+          <a href="#faq">FAQ</a>
+        </div>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </nav>
 
+    <div class="landing-container">
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-content">
+          <h1 class="hero-title">Share the <span class="gradient-text">music vibe</span>, together.</h1>
+          <p class="hero-subtitle">
+            A shared virtual music space where people feel like they're vibing together in the same room — with synchronized songs, voice chat, and shared controls.
+          </p>
+          <div class="hero-cta">
+            <button id="scrollToJoin" class="primary-button">
+              <i class="fas fa-headphones-alt button-icon"></i>
+              <span>Get Started</span>
+            </button>
+            <a href="#how-it-works" class="secondary-button">
+              <span>Learn More</span>
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-number">1000+</span>
+              <span class="stat-label">Active Rooms</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">5000+</span>
+              <span class="stat-label">Happy Users</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">24/7</span>
+              <span class="stat-label">Music Vibes</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="/img1.svg?height=400&width=600" alt="People enjoying music together" />
+        </div>
+      </section>
+
+      <!-- Join Room Section -->
+      <section id="join-section" class="join-section">
         <div class="join-card">
-          <h2>Join a Room</h2>
+          <div class="card-header">
+            <!-- <i class="fas fa-door-open card-icon"></i> -->
+            <h2>Join a Room</h2>
+          </div>
           <form id="joinForm" class="join-form">
             <div class="form-group">
               <label for="username">Your Name</label>
-              <input
-                type="text"
-                id="username"
-                placeholder="Enter your name"
-                required
-              />
+              <div class="input-wrapper">
+                <i class="fas fa-user input-icon"></i>
+                <input
+                  type="text"
+                  id="username"
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
             </div>
             <div class="form-group">
               <label for="room">Room Name</label>
-              <input
-                type="text"
-                id="room"
-                placeholder="Enter room name"
-                required
-              />
+              <div class="input-wrapper">
+                <i class="fas fa-music input-icon"></i>
+                <input
+                  type="text"
+                  id="room"
+                  placeholder="Enter room name"
+                  required
+                />
+                <button
+                  id="copyRoomBtn"
+                  type="button"
+                  title="Copy Room ID"
+                  class="input-action-btn"
+                  aria-label="Copy Room ID"
+                >
+                  <i class="fas fa-copy"></i>
+                </button>
+                <span id="copyConfirmation" class="copy-confirmation">
+                  Copied!
+                </span>
+              </div>
             </div>
-            <button type="submit" class="primary-button">
-              <span class="button-icon">🎧</span>
+            <button type="submit" class="primary-button full-width">
+              <i class="fas fa-headphones-alt button-icon"></i>
               <span>Join Room</span>
             </button>
           </form>
 
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
           <div class="create-room">
-            <p>Or create a new room with a random name</p>
-            <button id="createRoomBtn" class="secondary-button">
-              Create Room
+            <button id="createRoomBtn" class="secondary-button full-width">
+              <i class="fas fa-plus button-icon"></i>
+              Create New Room
             </button>
+            <p class="helper-text">Creates a room with a random name</p>
           </div>
         </div>
+      </section>
 
+      <!-- About Section -->
+      <section id="about" class="about-section">
+        <div class="section-header">
+          <span class="section-badge">About Us</span>
+          <h2>Experience music together, no matter where you are</h2>
+          <div class="section-underline"></div>
+        </div>
+        <div class="about-content">
+          <div class="about-text">
+            <p>
+              VibeRoom was born from a simple idea: music is better when shared. We wanted to create a space where friends could listen to music together, even when physically apart.
+            </p>
+            <p>
+              Whether you're across the room or across the world, VibeRoom lets you sync up your music experience with friends and family. Share your favorite tracks, discover new music together, and feel connected through the universal language of music.
+            </p>
+            <p>
+              Our platform is designed to be intuitive, responsive, and fun - bringing the joy of a shared listening experience to everyone, everywhere.
+            </p>
+          </div>
+          <div class="about-image">
+            <img src="img2.png" alt="About VibeRoom" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features" class="features-section">
+        <div class="section-header">
+          <span class="section-badge">Features</span>
+          <h2>Everything you need for the perfect shared music experience</h2>
+          <div class="section-underline"></div>
+        </div>
         <div class="features">
           <div class="feature">
-            <div class="feature-icon">🎵</div>
+            <div class="feature-icon">
+              <i class="fas fa-music"></i>
+            </div>
             <h3>Synchronized Music</h3>
-            <p>Listen to the same songs at the exact same time</p>
+            <p>Listen to the same songs at the exact same time with perfect synchronization</p>
           </div>
           <div class="feature">
-            <div class="feature-icon">🎤</div>
+            <div class="feature-icon">
+              <i class="fas fa-microphone"></i>
+            </div>
             <h3>Voice Chat</h3>
-            <p>Talk, sing, and vibe together in real-time</p>
+            <p>Talk, sing, and vibe together in real-time with crystal clear audio</p>
           </div>
           <div class="feature">
-            <div class="feature-icon">🎮</div>
+            <div class="feature-icon">
+              <i class="fas fa-sliders-h"></i>
+            </div>
             <h3>Shared Controls</h3>
-            <p>Everyone can control the music experience</p>
+            <p>Everyone can control the music experience - play, pause, skip, and queue songs</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="fas fa-comment-alt"></i>
+            </div>
+            <h3>Text Chat</h3>
+            <p>Share thoughts, lyrics, and reactions through the integrated chat system</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="fab fa-youtube"></i>
+            </div>
+            <h3>YouTube Integration</h3>
+            <p>Search and play any song from YouTube's vast library of music</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>Mobile Friendly</h3>
+            <p>Enjoy the full experience on any device - desktop, tablet, or mobile</p>
           </div>
         </div>
-      </div>
+      </section>
 
+      <!-- How It Works Section -->
+      <section id="how-it-works" class="how-it-works-section">
+        <div class="section-header">
+          <span class="section-badge">How It Works</span>
+          <h2>Get started in just a few simple steps</h2>
+          <div class="section-underline"></div>
+        </div>
+        <div class="steps-container">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Create or Join a Room</h3>
+              <p>Start a new room or join an existing one with a simple room code</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Invite Your Friends</h3>
+              <p>Share your room code with friends so they can join the session</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Search for Music</h3>
+              <p>Find your favorite songs using our integrated YouTube search</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3>Vibe Together</h3>
+              <p>Enjoy synchronized music, chat, and share the experience in real-time</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Team Section -->
+      <!-- <section id="team" class="team-section">
+        <div class="section-header">
+          <span class="section-badge">Our Team</span>
+          <h2>The people who brought VibeRoom to life</h2>
+          <div class="section-underline"></div>
+        </div>
+        <div class="team-members">
+          <div class="team-member">
+            <div class="member-avatar">
+              <img src="/placeholder.svg?height=150&width=150" alt="Team Member" />
+            </div>
+            <h3>Alex Johnson</h3>
+            <p class="member-role">Founder & Lead Developer</p>
+            <p class="member-bio">Music enthusiast and full-stack developer with a passion for creating shared experiences.</p>
+            <div class="member-social">
+              <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+              <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="member-avatar">
+              <img src="/placeholder.svg?height=150&width=150" alt="Team Member" />
+            </div>
+            <h3>Samantha Lee</h3>
+            <p class="member-role">UX/UI Designer</p>
+            <p class="member-bio">Creating intuitive and beautiful interfaces that make music sharing a joy.</p>
+            <div class="member-social">
+              <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+              <a href="#" aria-label="Dribbble"><i class="fab fa-dribbble"></i></a>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="member-avatar">
+              <img src="/placeholder.svg?height=150&width=150" alt="Team Member" />
+            </div>
+            <h3>Marcus Chen</h3>
+            <p class="member-role">Backend Engineer</p>
+            <p class="member-bio">Specializing in real-time synchronization and audio streaming technologies.</p>
+            <div class="member-social">
+              <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+              <a href="#" aria-label="Stack Overflow"><i class="fab fa-stack-overflow"></i></a>
+            </div>
+          </div>
+        </div>
+      </section> -->
+
+      <!-- FAQ Section -->
+      <section id="faq" class="faq-section">
+        <div class="section-header">
+          <span class="section-badge">FAQ</span>
+          <h2>Frequently Asked Questions</h2>
+          <div class="section-underline"></div>
+        </div>
+        <div class="faq-container">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h3>Is VibeRoom free to use?</h3>
+              <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+            </div>
+            <div class="faq-answer">
+              <p>Yes, VibeRoom is completely free to use. We believe in making music sharing accessible to everyone.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h3>How many people can join a room?</h3>
+              <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+            </div>
+            <div class="faq-answer">
+              <p>Currently, each room can accommodate up to 10 people simultaneously for the best experience.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h3>Do I need to create an account?</h3>
+              <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+            </div>
+            <div class="faq-answer">
+              <p>No account is needed! Simply enter your name and a room code to get started immediately.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h3>What music sources are supported?</h3>
+              <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+            </div>
+            <div class="faq-answer">
+              <p>Currently, VibeRoom supports YouTube as its primary music source, giving you access to millions of songs.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h3>Is my data private?</h3>
+              <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+            </div>
+            <div class="faq-answer">
+              <p>We don't store any personal data beyond what's needed for the session. Room data is temporary and deleted when inactive.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="cta-section">
+        <div class="cta-content">
+          <h2>Ready to start vibing together?</h2>
+          <p>Join thousands of music lovers sharing their favorite tunes in real-time.</p>
+          <button id="scrollToJoin2" class="primary-button large">
+            <i class="fas fa-headphones-alt button-icon"></i>
+            <span>Get Started Now</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Footer -->
       <footer>
-        <p>VibeRoom &copy; 2024 - Feel the music together</p>
+        <div class="footer-content">
+          <div class="footer-logo">
+            <div class="logo">
+              <span class="logo-icon"><i class="fas fa-headphones-alt"></i></span>
+              <span class="logo-text">VibeRoom</span>
+            </div>
+            <p>Feel the music together</p>
+          </div>
+          <div class="footer-links">
+            <div class="footer-column">
+              <h3>Navigation</h3>
+              <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#team">Team</a></li>
+                <li><a href="#faq">FAQ</a></li>
+              </ul>
+            </div>
+            <div class="footer-column">
+              <h3>Legal</h3>
+              <ul>
+                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Cookie Policy</a></li>
+              </ul>
+            </div>
+            <div class="footer-column">
+              <h3>Connect</h3>
+              <div class="social-links">
+                <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>VibeRoom &copy; 2024 - Feel the music together</p>
+        </div>
       </footer>
     </div>
 
@@ -104,8 +441,18 @@
             return;
           }
 
-          const randomRoom =
-            "room_" + Math.random().toString(36).substring(2, 8);
+          // Generate room ID starting with 'room_' plus random 4 alphanumeric characters
+          function generateRoomId() {
+            const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            let result = "";
+            for (let i = 0; i < 4; i++) {
+              result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return "room_" + result;
+          }
+  
+          const randomRoom = generateRoomId();
+  
           document.getElementById("room").value = randomRoom;
 
           // Auto-submit the form
@@ -113,30 +460,75 @@
             .getElementById("joinForm")
             .dispatchEvent(new Event("submit"));
         });
+
+      // Copy room ID button handler
+      document.getElementById("copyRoomBtn").addEventListener("click", () => {
+        const roomInput = document.getElementById("room");
+        const copyConfirmation = document.getElementById("copyConfirmation");
+        if (!roomInput.value) return;
+
+        navigator.clipboard.writeText(roomInput.value).then(() => {
+          // Show confirmation message
+          copyConfirmation.style.opacity = "1";
+          setTimeout(() => {
+            copyConfirmation.style.opacity = "0";
+          }, 1500);
+        });
+      });
+
+      // Scroll to join section
+      document.getElementById("scrollToJoin").addEventListener("click", () => {
+        document.getElementById("join-section").scrollIntoView({ behavior: "smooth" });
+      });
+
+      document.getElementById("scrollToJoin2").addEventListener("click", () => {
+        document.getElementById("join-section").scrollIntoView({ behavior: "smooth" });
+      });
+
+      // Mobile menu toggle
+      document.querySelector(".mobile-menu-toggle").addEventListener("click", () => {
+        document.querySelector(".nav-links").classList.toggle("active");
+      });
+
+      // FAQ toggles
+      document.querySelectorAll(".faq-question").forEach(question => {
+        question.addEventListener("click", () => {
+          const faqItem = question.parentElement;
+          faqItem.classList.toggle("active");
+          
+          const icon = question.querySelector(".faq-toggle i");
+          if (faqItem.classList.contains("active")) {
+            icon.classList.remove("fa-plus");
+            icon.classList.add("fa-minus");
+          } else {
+            icon.classList.remove("fa-minus");
+            icon.classList.add("fa-plus");
+          }
+        });
+      });
     </script>
     <!-- Add this script at the end of the body tag to ensure it runs after the page loads -->
-<script>
-  // This script ensures the responsive UI is initialized when the index page loads
-  document.addEventListener('DOMContentLoaded', function() {
-    // Check if initResponsiveUI exists (it should be defined in client.js)
-    if (typeof initResponsiveUI === 'function') {
-      initResponsiveUI();
-    } else {
-      // If not defined yet, wait for client.js to load
-      const checkInterval = setInterval(function() {
+    <script>
+      // This script ensures the responsive UI is initialized when the index page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check if initResponsiveUI exists (it should be defined in client.js)
         if (typeof initResponsiveUI === 'function') {
           initResponsiveUI();
-          clearInterval(checkInterval);
+        } else {
+          // If not defined yet, wait for client.js to load
+          const checkInterval = setInterval(function() {
+            if (typeof initResponsiveUI === 'function') {
+              initResponsiveUI();
+              clearInterval(checkInterval);
+            }
+          }, 100);
+          
+          // Stop checking after 5 seconds to prevent infinite loop
+          setTimeout(function() {
+            clearInterval(checkInterval);
+          }, 5000);
         }
-      }, 100);
-      
-      // Stop checking after 5 seconds to prevent infinite loop
-      setTimeout(function() {
-        clearInterval(checkInterval);
-      }, 5000);
-    }
-  });
-</script>
-
+      });
+    </script>
   </body>
 </html>

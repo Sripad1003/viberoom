@@ -3,7 +3,7 @@ let player;
 let localStream;
 let peerConnection;
 let isSyncing = false;
-let autoPlayEnabled = false;
+let autoPlayEnabled = true;
 let isCallActive = false;
 let videoQueue = [];
 let currentVideoIndex = -1;
@@ -14,6 +14,7 @@ let isFullscreen = false;
 let unreadMessages = 0;
 const userColors = {};
 const userInitials = {};
+let peerConnections = {};
 
 // Get room and username from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -38,7 +39,6 @@ const socket = io();
 
 // DOM Elements
 const volumeSlider = document.getElementById("volumeSlider");
-const autoPlayToggle = document.getElementById("autoPlayToggle");
 const searchButton = document.getElementById("searchButton");
 const searchInput = document.getElementById("youtubeSearchInput");
 const searchResults = document.getElementById("searchResults");
@@ -76,11 +76,21 @@ const themeSelect = document.getElementById("themeSelect");
 const autoplayToggle = document.getElementById("autoplayToggle");
 const qualitySelect = document.getElementById("qualitySelect");
 
+
 // Initialize the application
+let pendingVideoToLoad = null;
+let pendingSeekTime = 0;
+let pendingAutoplay = false;
+
 function initApp() {
   // Set room and user information
   roomNameElement.textContent = room;
   userNameElement.textContent = username;
+
+  // Set autoplay toggle checked to true to sync UI with autoPlayEnabled default true
+  if (autoplayToggle) {
+    autoplayToggle.checked = true;
+  }
 
   // Generate user avatar with initials
   const initials = getInitials(username);
@@ -109,6 +119,92 @@ function initApp() {
   );
 }
 
+// Remove client-side emission of 'sync-video' on join, as server sends authoritative state
+// Remove this block if present:
+// document.addEventListener('DOMContentLoaded', () => {
+//   const currentVideo = videoQueue[currentVideoIndex];
+//   const currentTime = player ? player.getCurrentTime() : 0;
+//   socket.emit('sync-video', {
+//     room,
+//     currentVideo,
+//     currentTime,
+//     username
+//   });
+//   if (currentVideo) {
+//     updateNowPlayingInfo(currentVideo); // Update details
+//     hideVideoOverlay(); // Hide overlay if video is playing
+//   }
+//   if (player && currentVideo) {
+//     player.seekTo(currentTime, true); // Seek to correct time
+//     player.playVideo(); // Play video
+//   }
+// });
+
+socket.on("queue-update", ({ queue, currentVideoIndex: newIndex, currentTime, isPlaying }) => {
+  const previousIndex = currentVideoIndex;
+  const previousVideoId = videoQueue[currentVideoIndex]?.videoId;
+
+  videoQueue = queue;
+
+  // If queue is empty, stop player and reset currentVideoIndex
+  if (videoQueue.length === 0) {
+    currentVideoIndex = -1;
+    stopVisualizer();
+    if (player) {
+      player.stopVideo();
+    }
+    const ytPlayer = document.getElementById("ytplayer");
+    if (ytPlayer) {
+      ytPlayer.innerHTML = "";
+      ytPlayer.style.userSelect = "auto";
+    }
+    showVideoOverlay();
+    updateNowPlayingInfo(null);
+    updateQueueUI();
+    return;
+  } else {
+    currentVideoIndex = newIndex;
+    hideVideoOverlay();
+  }
+
+  updateQueueUI();
+
+  // Update video details
+  const currentVideo = videoQueue[currentVideoIndex];
+  updateNowPlayingInfo(currentVideo);
+
+  // If player exists, load video and sync playback state only if video changed
+  if (player && currentVideo) {
+    if (previousIndex !== currentVideoIndex || previousVideoId !== currentVideo.videoId) {
+      player.loadVideoById(currentVideo.videoId);
+      player.seekTo(currentTime || 0, true);
+      if (isPlaying) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+      }
+    } else {
+      // Same video, just sync play/pause and seek if needed
+      if (isPlaying) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+      }
+      if (typeof currentTime === "number") {
+        const playerTime = player.getCurrentTime();
+        if (Math.abs(playerTime - currentTime) > 1) {
+          player.seekTo(currentTime, true);
+        }
+      }
+    }
+  } else if (currentVideo) {
+    // If player not initialized, set pending variables to load video and sync state on ready
+    pendingVideoToLoad = currentVideo.videoId;
+    pendingSeekTime = currentTime || 0;
+    pendingAutoplay = isPlaying;
+  }
+});
+
 // Setup event listeners
 function setupEventListeners() {
   // Volume slider
@@ -119,15 +215,8 @@ function setupEventListeners() {
   });
 
   // Auto play toggle
-  autoPlayToggle.addEventListener("change", () => {
-    autoPlayEnabled = autoPlayToggle.checked;
-    autoplayToggle.checked = autoPlayToggle.checked;
-  });
-
-  // Settings autoplay toggle
   autoplayToggle.addEventListener("change", () => {
     autoPlayEnabled = autoplayToggle.checked;
-    autoPlayToggle.checked = autoplayToggle.checked;
   });
 
   // Search button
@@ -320,30 +409,7 @@ function initializeTheme() {
 }
 
 function setTheme(theme) {
-  if (theme === "system") {
-    // Check system preference
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      document.body.classList.add("dark-theme");
-    } else {
-      document.body.classList.remove("dark-theme");
-    }
-
-    // Listen for changes in system preference
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (themeSelect.value === "system") {
-          if (e.matches) {
-            document.body.classList.add("dark-theme");
-          } else {
-            document.body.classList.remove("dark-theme");
-          }
-        }
-      });
-  } else if (theme === "dark") {
+  if (theme === "dark") {
     document.body.classList.add("dark-theme");
   } else {
     document.body.classList.remove("dark-theme");
@@ -423,29 +489,54 @@ function setupSocketListeners() {
     onlineCountElement.textContent = users.length;
   });
 
-  // Queue update
+  // Queue update listener
   socket.on("queue-update", ({ queue, currentVideoIndex: newIndex }) => {
     const previousIndex = currentVideoIndex;
     videoQueue = queue;
     currentVideoIndex = newIndex;
     updateQueueUI();
 
-    if (
-      currentVideoIndex >= 0 &&
-      currentVideoIndex < videoQueue.length &&
-      currentVideoIndex !== previousIndex
-    ) {
-      playVideoAtIndex(currentVideoIndex, true);
-      hideVideoOverlay();
-    } else if (currentVideoIndex >= 0 && currentVideoIndex < videoQueue.length) {
-      // Just update now playing info without restarting video
-      updateNowPlayingInfo(videoQueue[currentVideoIndex]);
-      hideVideoOverlay();
+    // If the queue is empty, show the overlay
+    if (videoQueue.length === 0) {
+      stopVisualizer();
+      const ytPlayer = document.getElementById("ytplayer");
+      if (ytPlayer) {
+        ytPlayer.innerHTML = "";
+        ytPlayer.style.userSelect = "auto";
+      }
+      showVideoOverlay(); // Show the overlay message
+      updateNowPlayingInfo(null); // Clear video details
     } else {
-      showVideoOverlay();
-      updateNowPlayingInfo(null);
+      // If there are videos in the queue, hide the overlay
+      hideVideoOverlay();
+
+      // Only start the new video if it's not the same as the current one
+      if (
+        currentVideoIndex >= 0 &&
+        currentVideoIndex < videoQueue.length &&
+        previousIndex !== currentVideoIndex
+      ) {
+        playVideoAtIndex(currentVideoIndex, true); // Play video
+      } else if (previousIndex === currentVideoIndex) {
+        updateNowPlayingInfo(videoQueue[currentVideoIndex]); // Keep the video details updated
+      } else {
+        // Stop the player if the queue is invalid (empty or out of index)
+        if (player) {
+          player.stopVideo();
+        }
+        stopVisualizer();
+        const ytPlayer = document.getElementById("ytplayer");
+        if (ytPlayer) {
+          ytPlayer.innerHTML = "";
+          ytPlayer.style.userSelect = "auto";
+        }
+        showVideoOverlay(); // Show overlay when there is no video to play
+        updateNowPlayingInfo(null); // Update details to show nothing is playing
+      }
     }
   });
+
+
 
   // Play event
   socket.on("play", ({ username: sender, time }) => {
@@ -473,6 +564,39 @@ function setupSocketListeners() {
     }
   });
 
+  // On video sync (sync-video listener)
+  socket.on('sync-video', ({ currentVideo, currentTime, username, newUserId, isPlaying }) => {
+    console.log("[sync-video] Received sync-video event:", { currentVideo, currentTime, username, newUserId, isPlaying });
+
+    // Update video details (title, thumbnail, etc.) for the new user
+    if (currentVideo) {
+      updateNowPlayingInfo(currentVideo); // Update video title and thumbnail
+      hideVideoOverlay(); // Hide overlay when video is playing
+    } else {
+      // If no video is available, show the overlay message
+      showVideoOverlay();
+    }
+
+    // If player is already initialized, set the current time and play/pause the video based on isPlaying
+    if (player && currentVideo) {
+      player.seekTo(currentTime, true); // Seek to the current time of the video
+      if (isPlaying) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+      }
+    }
+
+    // If player is not initialized, initialize and load the video
+    if (!player && currentVideo) {
+      createYouTubePlayer(currentVideo.videoId); // Create a new player with the given video ID
+      // Delay seek and play/pause until player is ready
+      pendingVideoToLoad = currentVideo.videoId;
+      pendingSeekTime = currentTime;
+      pendingAutoplay = isPlaying;
+    }
+  });
+
   // Seek event
   socket.on("seek", ({ time, username: sender }) => {
     if (sender !== username && player) {
@@ -486,17 +610,49 @@ function setupSocketListeners() {
     }
   });
 
-  // User joined notification
-  socket.on("user-joined", ({ username: joinedUser }) => {
-    if (joinedUser !== username) {
-      showNotification(
-        "User Joined",
-        `${joinedUser} has joined the room`,
-        "fa-user-plus"
-      );
-      addSystemMessage(`${joinedUser} has joined the room`);
-    }
+  socket.on('user-joined', async ({ username, newUserId }) => {
+    console.log("[user-joined] User joined:", { username, newUserId });
+
+    // Broadcast the current video state and playing status to the new user
+    const currentVideo = videoQueue[currentVideoIndex];
+    const currentTime = player ? player.getCurrentTime() : 0;
+    const isPlaying = player ? player.getPlayerState() === YT.PlayerState.PLAYING : false;
+
+    // Send the current video state, time, and playing status to the new user
+    socket.emit('sync-video', {
+      room,
+      currentVideo,
+      currentTime,
+      isPlaying,
+      username: username,
+      newUserId: newUserId
+    });
+
+    // Create new peer connection for this user (existing logic)
+    const peerConnection = new RTCPeerConnection(config);
+    peerConnections[newUserId] = peerConnection;
+
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+
+    peerConnection.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        socket.emit('ice-candidate', { room, candidate, newUserId });
+      }
+    };
+
+    peerConnection.ontrack = (event) => {
+      const remoteStream = new MediaStream([event.track]);
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+    };
+
+    // Send an offer to the new user
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.emit("offer", { offer, newUserId });
   });
+
 
   // User left notification
   socket.on("user-left", ({ username: leftUser }) => {
@@ -530,32 +686,71 @@ function setupSocketListeners() {
   // WebRTC signaling
   socket.on("offer", async ({ offer, sender }) => {
     try {
-      showNotification("Voice Chat", `${sender} is calling...`, "fa-phone");
-      await handleIncomingCall(offer);
-    } catch (err) {
-      console.error("Error handling offer:", err);
-    }
-  });
-
-  socket.on("answer", async ({ answer }) => {
-    try {
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    } catch (err) {
-      console.error("Error setting answer:", err);
-    }
-  });
-
-  socket.on("ice-candidate", async ({ candidate }) => {
-    try {
+      // Step 1: Clean up previous peer & stream if not already ended
       if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        peerConnection.onicecandidate = null;
+        peerConnection.ontrack = null;
+        peerConnection.close();
+        peerConnection = null;
       }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+
+      // Step 2: Re-init new connection
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      peerConnection = new RTCPeerConnection(config);
+
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
+
+      peerConnection.onicecandidate = ({ candidate }) => {
+        if (candidate) {
+          socket.emit("ice-candidate", { room, candidate });
+        }
+      };
+
+      peerConnection.ontrack = (event) => {
+        const remoteStream = new MediaStream([event.track]);
+        const audioElement = document.getElementById("remoteAudio");
+        if (audioElement) {
+          audioElement.srcObject = remoteStream;
+        }
+      };
+
+      // Step 3: Handle remote offer and send answer
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.emit("answer", { room, answer });
+
+      isCallActive = true;
+      updateCallButtons(true);
+      showNotification("Voice Chat", `${sender} is calling...`, "fa-phone");
     } catch (err) {
-      console.error("Error adding ICE candidate:", err);
+      console.error("Error handling incoming call:", err);
+      showNotification("Voice Chat Error", err.message, "fa-exclamation-circle");
     }
   });
+
+  socket.on("answer", async ({ answer, sender }) => {
+    const peerConnection = peerConnections[sender]; // Assuming peerConnections stores peer connections by sender
+
+    if (peerConnection) {
+      await peerConnection.setRemoteDescription(answer); // Set the remote answer received from the sender
+    }
+  });
+
+  socket.on("ice-candidate", async ({ candidate, sender }) => {
+    const peerConnection = peerConnections[sender];
+
+    if (peerConnection) {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  });
+
 }
 
 // Unread messages functions
@@ -727,6 +922,23 @@ function onPlayerReady(event) {
   } else if (quality === "fullhd") {
     player.setPlaybackQuality("hd1080");
   }
+
+  // If there is a pending video to load and seek, do it now
+  if (pendingVideoToLoad) {
+    player.loadVideoById(pendingVideoToLoad);
+    if (pendingSeekTime > 0) {
+      player.seekTo(pendingSeekTime, true);
+    }
+    if (pendingAutoplay) {
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
+    pendingVideoToLoad = null;
+    pendingSeekTime = 0;
+    pendingAutoplay = false;
+    hideVideoOverlay();
+  }
 }
 
 let lastSentTime = 0;
@@ -828,6 +1040,11 @@ function playVideoAtIndex(index, autoplay = true) {
   const newVideoId = videoQueue[index].videoId;
   currentVideoIndex = index;
 
+  // // If the same video is being added to the queue, do not restart it
+  // if (player && newVideoId === player.getVideoData().video_id) {
+  //   return; // Avoid restarting the same video
+  // }
+
   if (player) {
     player.loadVideoById(newVideoId);
     if (autoplay) {
@@ -871,7 +1088,17 @@ async function performSearch(query) {
 }
 
 function displaySearchResults(items) {
+  // Add close button at the top of search results
   searchResults.innerHTML = "";
+  const closeButton = document.createElement("button");
+  closeButton.className = "search-close-button";
+  closeButton.textContent = "×"; // Multiplication sign as close icon
+  closeButton.title = "Close search results";
+  closeButton.addEventListener("click", () => {
+    searchResults.classList.remove("active");
+  });
+  searchResults.appendChild(closeButton);
+
 
   items.forEach((item) => {
     const videoId = item.id.videoId;
@@ -889,14 +1116,24 @@ function displaySearchResults(items) {
         <div class="search-result-title">${title}</div>
         <div class="search-result-channel">${channelTitle}</div>
       </div>
+      <div class="search-result-actions">
+                          <button class="add-to-queue-button" data-video-id="${videoId}" title="Add to Queue">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
     `;
+    resultItem.querySelector(".add-to-queue-button").addEventListener("click", (event) => {
+      event.stopPropagation();
+      addVideoToQueue(videoId, title, thumbnail, channelTitle);
+    });
+    searchResults.appendChild(resultItem);
 
     resultItem.addEventListener("click", () => {
       addVideoToQueue(videoId, title, thumbnail, channelTitle);
       searchResults.classList.remove("active");
     });
 
-    searchResults.appendChild(resultItem);
+    // searchResults.appendChild(resultItem);
   });
 }
 
@@ -929,6 +1166,7 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
     addedBy: username,
   };
 
+  const wasEmpty = videoQueue.length === 0;
   const newQueue = [...videoQueue, newVideo];
   let newIndex = currentVideoIndex;
 
@@ -938,25 +1176,33 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
   }
 
   // If a video is currently playing, keep currentVideoIndex unchanged to avoid restarting
-  // Only update currentVideoIndex if no video is playing (currentVideoIndex === -1)
   if (currentVideoIndex === -1) {
     newIndex = 0;
   } else {
     newIndex = currentVideoIndex;
   }
 
+  showNotification("Queue", `Added "${title}" to queue`, "fa-plus");
+
   socket.emit("queue-update", {
     room,
     queue: newQueue,
     currentVideoIndex: newIndex,
   });
-  showNotification("Queue", `Added "${title}" to queue`, "fa-plus");
 
-  // Hide overlay if this is the first video added
-  if (newQueue.length === 1) {
+  // Update video details immediately
+  updateNowPlayingInfo(newVideo);  // <-- Add this line to update video details immediately
+
+  if (wasEmpty) {
     hideVideoOverlay();
+    if (autoplayEnabled) {
+      playVideoAtIndex(newIndex, true);
+    } else {
+      playVideoAtIndex(newIndex, false);
+    }
   }
 }
+
 
 function updateQueueUI() {
   queueList.innerHTML = "";
@@ -1003,6 +1249,8 @@ function updateQueueUI() {
           queue: videoQueue,
           currentVideoIndex: index,
         });
+        // Ensure now playing info updates even if index is same
+        updateNowPlayingInfo(videoQueue[index]);
       }
     });
 
@@ -1029,7 +1277,7 @@ function removeFromQueue(index) {
   if (newQueue.length === 0) {
     newIndex = -1;
   } else if (index === currentVideoIndex) {
-    // If removing current playing video, play the next one
+    // If removing current playing video, play the next one or previous if last
     newIndex = Math.min(index, newQueue.length - 1);
   } else if (index < currentVideoIndex) {
     // If removing a video before current, adjust index
@@ -1060,9 +1308,8 @@ function sendChatMessage() {
 
 function addChatMessage(sender, message, timestamp, isOwnMessage = false) {
   const messageElement = document.createElement("div");
-  messageElement.className = `chat-message ${
-    isOwnMessage ? "own-message" : ""
-  }`;
+  messageElement.className = `chat-message ${isOwnMessage ? "own-message" : ""
+    }`;
 
   // Get or create user color and initials
   if (!userColors[sender]) {
@@ -1195,12 +1442,18 @@ function updateControlButtons() {
 function updateNowPlayingInfo(video) {
   if (!video) {
     currentTitle.textContent = "Nothing playing";
-    currentThumbnail.innerHTML = '<i class="fas fa-music"></i>';
-    return;
+    currentThumbnail.innerHTML = '<i class="fas fa-music"></i>'; // Default icon if no video is playing
+  } else {
+    currentTitle.textContent = video.title; // Set video title
+    currentThumbnail.innerHTML = `<img src="${video.thumbnail}" alt="${video.title}">`; // Set video thumbnail
   }
 
-  currentTitle.textContent = video.title;
-  currentThumbnail.innerHTML = `<img src="${video.thumbnail}" alt="${video.title}">`;
+  // If no video is playing, show the overlay
+  if (!video && videoQueue.length === 0) {
+    showVideoOverlay(); // Show the overlay if the queue is empty
+  } else {
+    hideVideoOverlay(); // Hide the overlay if there is a video
+  }
 }
 
 function showSyncStatus(isSyncing, message) {
@@ -1252,27 +1505,59 @@ async function startCall() {
   if (isCallActive) return;
 
   try {
+    // Ensure previous tracks/peers are cleared
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+
+    // Create fresh stream and peer connection
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     peerConnection = new RTCPeerConnection(config);
 
-    localStream.getTracks().forEach((track) => {
+    // Add tracks
+    localStream.getTracks().forEach(track => {
       peerConnection.addTrack(track, localStream);
     });
 
+    // Send candidates
     peerConnection.onicecandidate = ({ candidate }) => {
       if (candidate) {
         socket.emit("ice-candidate", { room, candidate });
       }
     };
 
+    // Receive tracks
     peerConnection.ontrack = (event) => {
       const remoteStream = new MediaStream([event.track]);
-      document.getElementById("remoteAudio").srcObject = remoteStream;
+      const audioElement = document.getElementById("remoteAudio");
+      if (audioElement) {
+        audioElement.srcObject = remoteStream;
+      }
     };
 
+    // Offer
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     socket.emit("offer", { room, offer, sender: username });
+
+    // Re-bind listeners
+    socket.off("answer");
+    socket.off("ice-candidate");
+
+    socket.on("answer", async ({ answer }) => {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on("ice-candidate", async ({ candidate }) => {
+      if (peerConnection) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
 
     isCallActive = true;
     updateCallButtons(true);
@@ -1319,20 +1604,30 @@ async function handleIncomingCall(offer) {
 }
 
 function endCall() {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
+  try {
+    if (peerConnection) {
+      peerConnection.onicecandidate = null;
+      peerConnection.ontrack = null;
+      peerConnection.close();
+      peerConnection = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    const audioElement = document.getElementById("remoteAudio");
+    if (audioElement) {
+      audioElement.srcObject = null;
+    }
+    isCallActive = false;
+    updateCallButtons(false);
+    // Unregister previous listeners to avoid duplication
+    socket.off("ice-candidate");
+    socket.off("answer");
+    showNotification("Voice Chat", "Call ended", "fa-microphone-slash");
+  } catch (err) {
+    console.error("Error ending call:", err);
   }
-
-  if (localStream) {
-    localStream.getTracks().forEach((track) => track.stop());
-    localStream = null;
-  }
-
-  document.getElementById("remoteAudio").srcObject = null;
-  isCallActive = false;
-  updateCallButtons(false);
-  showNotification("Voice Chat", "Voice chat ended", "fa-microphone-slash");
 }
 
 function updateCallButtons(isActive) {
@@ -1370,7 +1665,7 @@ function showNotification(title, message, icon) {
   // Remove notification after 5 seconds
   setTimeout(() => {
     notification.remove();
-  }, 5000);
+  }, 3000);
 }
 
 function getInitials(name) {
@@ -1552,5 +1847,8 @@ document.addEventListener("DOMContentLoaded", () => {
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   });
 });
+
+/* Removed this DOMContentLoaded listener to avoid client-side emission of 'sync-video' on join,
+   since the server sends authoritative playback state on join. */
 
 
