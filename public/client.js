@@ -7,6 +7,7 @@ let autoPlayEnabled = true;
 let isCallActive = false;
 let videoQueue = [];
 let currentVideoIndex = -1;
+let isLocalQueueUpdate = false;
 let isDragging = false;
 let progressUpdateInterval;
 let isTheaterMode = false;
@@ -139,71 +140,6 @@ function initApp() {
 //     player.playVideo(); // Play video
 //   }
 // });
-
-socket.on("queue-update", ({ queue, currentVideoIndex: newIndex, currentTime, isPlaying }) => {
-  const previousIndex = currentVideoIndex;
-  const previousVideoId = videoQueue[currentVideoIndex]?.videoId;
-
-  videoQueue = queue;
-
-  // If queue is empty, stop player and reset currentVideoIndex
-  if (videoQueue.length === 0) {
-    currentVideoIndex = -1;
-    stopVisualizer();
-    if (player) {
-      player.stopVideo();
-    }
-    const ytPlayer = document.getElementById("ytplayer");
-    if (ytPlayer) {
-      ytPlayer.innerHTML = "";
-      ytPlayer.style.userSelect = "auto";
-    }
-    showVideoOverlay();
-    updateNowPlayingInfo(null);
-    updateQueueUI();
-    return;
-  } else {
-    currentVideoIndex = newIndex;
-    hideVideoOverlay();
-  }
-
-  updateQueueUI();
-
-  // Update video details
-  const currentVideo = videoQueue[currentVideoIndex];
-  updateNowPlayingInfo(currentVideo);
-
-  // If player exists, load video and sync playback state only if video changed
-  if (player && currentVideo) {
-    if (previousIndex !== currentVideoIndex || previousVideoId !== currentVideo.videoId) {
-      player.loadVideoById(currentVideo.videoId);
-      player.seekTo(currentTime || 0, true);
-      if (isPlaying) {
-        player.playVideo();
-      } else {
-        player.pauseVideo();
-      }
-    } else {
-      // Same video, just sync play/pause and seek if needed
-      if (isPlaying) {
-        player.playVideo();
-      } else {
-        player.pauseVideo();
-      }
-      if (typeof currentTime === "number") {
-        const playerTime = player.getCurrentTime();
-        if (Math.abs(playerTime - currentTime) > 1) {
-          player.seekTo(currentTime, true);
-        }
-      }
-    }
-  } else if (currentVideo) {
-    // If player not initialized, set pending variables to load video and sync state on ready
-    pendingVideoToLoad = currentVideo.videoId;
-    pendingSeekTime = currentTime || 0;
-    pendingAutoplay = isPlaying;
-  }
-});
 
 // Setup event listeners
 function setupEventListeners() {
@@ -488,55 +424,92 @@ function setupSocketListeners() {
     updateActiveUsers(users);
     onlineCountElement.textContent = users.length;
   });
+  socket.on("queue-update", ({ queue, currentVideoIndex: newIndex, currentTime, isPlaying }) => {
+    if (isLocalQueueUpdate) {
+      isLocalQueueUpdate = false;
+      return;
+    }
 
-  // Queue update listener
-  socket.on("queue-update", ({ queue, currentVideoIndex: newIndex }) => {
     const previousIndex = currentVideoIndex;
-    videoQueue = queue;
-    currentVideoIndex = newIndex;
-    updateQueueUI();
+    const previousVideoId = videoQueue[currentVideoIndex]?.videoId;
 
-    // If the queue is empty, show the overlay
+    videoQueue = queue;
+
+    // If queue is empty, stop player and reset currentVideoIndex
     if (videoQueue.length === 0) {
+      currentVideoIndex = -1;
+      stopVisualizer();
+      if (player) {
+        player.stopVideo();
+      }
+      const ytPlayer = document.getElementById("ytplayer");
+      if (ytPlayer) {
+        ytPlayer.innerHTML = "";
+        ytPlayer.style.userSelect = "auto";
+      }
+      showVideoOverlay();
+      updateNowPlayingInfo(null);
+      updateQueueUI();
+      return;
+    } else {
+      currentVideoIndex = newIndex;
+      hideVideoOverlay();
+    }
+
+    // New check for out-of-bounds currentVideoIndex
+    if (currentVideoIndex < 0 || currentVideoIndex >= videoQueue.length) {
+      if (player) {
+        player.stopVideo();
+      }
       stopVisualizer();
       const ytPlayer = document.getElementById("ytplayer");
       if (ytPlayer) {
         ytPlayer.innerHTML = "";
         ytPlayer.style.userSelect = "auto";
       }
-      showVideoOverlay(); // Show the overlay message
-      updateNowPlayingInfo(null); // Clear video details
-    } else {
-      // If there are videos in the queue, hide the overlay
-      hideVideoOverlay();
+      showVideoOverlay();
+      updateNowPlayingInfo(null);
+      updateQueueUI();
+      return;
+    }
 
-      // Only start the new video if it's not the same as the current one
-      if (
-        currentVideoIndex >= 0 &&
-        currentVideoIndex < videoQueue.length &&
-        previousIndex !== currentVideoIndex
-      ) {
-        playVideoAtIndex(currentVideoIndex, true); // Play video
-      } else if (previousIndex === currentVideoIndex) {
-        updateNowPlayingInfo(videoQueue[currentVideoIndex]); // Keep the video details updated
+    updateQueueUI();
+
+    // Update video details
+    const currentVideo = videoQueue[currentVideoIndex];
+    updateNowPlayingInfo(currentVideo);
+
+    // If player exists, load video and sync playback state only if video changed
+    if (player && currentVideo) {
+      if (previousIndex !== currentVideoIndex || previousVideoId !== currentVideo.videoId) {
+        player.loadVideoById(currentVideo.videoId);
+        player.seekTo(currentTime || 0, true);
+        if (isPlaying) {
+          player.playVideo();
+        } else {
+          player.pauseVideo();
+        }
       } else {
-        // Stop the player if the queue is invalid (empty or out of index)
-        if (player) {
-          player.stopVideo();
+        // Same video, just sync play/pause and seek if needed
+        if (isPlaying) {
+          player.playVideo();
+        } else {
+          player.pauseVideo();
         }
-        stopVisualizer();
-        const ytPlayer = document.getElementById("ytplayer");
-        if (ytPlayer) {
-          ytPlayer.innerHTML = "";
-          ytPlayer.style.userSelect = "auto";
+        if (typeof currentTime === "number") {
+          const playerTime = player.getCurrentTime();
+          if (Math.abs(playerTime - currentTime) > 1) {
+            player.seekTo(currentTime, true);
+          }
         }
-        showVideoOverlay(); // Show overlay when there is no video to play
-        updateNowPlayingInfo(null); // Update details to show nothing is playing
       }
+    } else if (currentVideo) {
+      // If player not initialized, set pending variables to load video and sync state on ready
+      pendingVideoToLoad = currentVideo.videoId;
+      pendingSeekTime = currentTime || 0;
+      pendingAutoplay = isPlaying;
     }
   });
-
-
 
   // Play event
   socket.on("play", ({ username: sender, time }) => {
@@ -879,13 +852,27 @@ function stopProgressUpdater() {
   }
 }
 
+// YouTube API readiness flag
+let youtubeApiReady = false;
+
 // YouTube API functions
 function onYouTubeIframeAPIReady() {
-  // YouTube API is ready, but we'll create the player when a video is selected
+  youtubeApiReady = true;
   console.log("YouTube API ready");
+
+  // If there is a pending video to load, create the player now
+  if (pendingVideoToLoad) {
+    createYouTubePlayer(pendingVideoToLoad);
+  }
 }
 
 function createYouTubePlayer(videoId) {
+  if (!youtubeApiReady) {
+    // Delay player creation until API is ready
+    pendingVideoToLoad = videoId;
+    return;
+  }
+
   if (player) {
     player.loadVideoById(videoId);
     return;
@@ -1013,24 +1000,40 @@ function pauseSong() {
 function playNext() {
   if (currentVideoIndex + 1 < videoQueue.length) {
     currentVideoIndex = currentVideoIndex + 1;
+    isLocalQueueUpdate = true;
     socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
     showNotification(
       "Playback",
       `${username} skipped to next song`,
       "fa-step-forward"
     );
+    // Update UI locally
+    updateQueueUI();
+    updateNowPlayingInfo(videoQueue[currentVideoIndex]);
+    if (player) {
+      player.loadVideoById(videoQueue[currentVideoIndex].videoId);
+      player.playVideo();
+    }
   }
 }
 
 function playPrevious() {
   if (currentVideoIndex - 1 >= 0) {
     currentVideoIndex = currentVideoIndex - 1;
+    isLocalQueueUpdate = true;
     socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
     showNotification(
       "Playback",
       `${username} went to previous song`,
       "fa-step-backward"
     );
+    // Update UI locally
+    updateQueueUI();
+    updateNowPlayingInfo(videoQueue[currentVideoIndex]);
+    if (player) {
+      player.loadVideoById(videoQueue[currentVideoIndex].videoId);
+      player.playVideo();
+    }
   }
 }
 
@@ -1040,10 +1043,10 @@ function playVideoAtIndex(index, autoplay = true) {
   const newVideoId = videoQueue[index].videoId;
   currentVideoIndex = index;
 
-  // // If the same video is being added to the queue, do not restart it
-  // if (player && newVideoId === player.getVideoData().video_id) {
-  //   return; // Avoid restarting the same video
-  // }
+  // If the same video is being added to the queue, do not restart it
+  if (player && newVideoId === player.getVideoData().video_id) {
+    return; // Avoid restarting the same video
+  }
 
   if (player) {
     player.loadVideoById(newVideoId);
@@ -1053,6 +1056,7 @@ function playVideoAtIndex(index, autoplay = true) {
       player.pauseVideo();
     }
   } else {
+    pendingAutoplay = autoplay;
     createYouTubePlayer(newVideoId);
   }
 
@@ -1191,11 +1195,11 @@ function addVideoToQueue(videoId, title, thumbnail, channelTitle) {
   });
 
   // Update video details immediately
-  updateNowPlayingInfo(newVideo);  // <-- Add this line to update video details immediately
+  // updateNowPlayingInfo(newVideo);  // <-- Add this line to update video details immediately
 
   if (wasEmpty) {
     hideVideoOverlay();
-    if (autoplayEnabled) {
+    if (autoPlayEnabled) {
       playVideoAtIndex(newIndex, true);
     } else {
       playVideoAtIndex(newIndex, false);
@@ -1244,6 +1248,7 @@ function updateQueueUI() {
         // Update UI immediately
         playVideoAtIndex(index, true);
         // Emit socket event to sync with others
+        isLocalQueueUpdate = true;
         socket.emit("queue-update", {
           room,
           queue: videoQueue,
