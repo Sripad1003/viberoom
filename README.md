@@ -18,7 +18,7 @@ VibeRoom is a real-time music sharing and vibing web application that allows use
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/viberoom.git
+   git clone https://github.com/Sripad1003/viberoom.git
    cd viberoom
    ```
 
