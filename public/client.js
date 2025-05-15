@@ -67,7 +67,6 @@ const totalTimeDisplay = document.querySelector(".total-time");
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 const sendMessageBtn = document.getElementById("sendMessageBtn");
-const emojiButtons = document.querySelectorAll(".emoji-button");
 const sidebarTabs = document.querySelectorAll(".sidebar-tab");
 const sidebarPanels = document.querySelectorAll(".sidebar-panel");
 const theaterModeBtn = document.getElementById("theaterModeBtn");
@@ -119,27 +118,6 @@ function initApp() {
     "fa-music"
   );
 }
-
-// Remove client-side emission of 'sync-video' on join, as server sends authoritative state
-// Remove this block if present:
-// document.addEventListener('DOMContentLoaded', () => {
-//   const currentVideo = videoQueue[currentVideoIndex];
-//   const currentTime = player ? player.getCurrentTime() : 0;
-//   socket.emit('sync-video', {
-//     room,
-//     currentVideo,
-//     currentTime,
-//     username
-//   });
-//   if (currentVideo) {
-//     updateNowPlayingInfo(currentVideo); // Update details
-//     hideVideoOverlay(); // Hide overlay if video is playing
-//   }
-//   if (player && currentVideo) {
-//     player.seekTo(currentTime, true); // Seek to correct time
-//     player.playVideo(); // Play video
-//   }
-// });
 
 // Setup event listeners
 function setupEventListeners() {
@@ -210,14 +188,6 @@ function setupEventListeners() {
 
   // Send message button
   sendMessageBtn.addEventListener("click", sendChatMessage);
-
-  // Emoji reactions
-  emojiButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const emoji = button.getAttribute("data-emoji");
-      sendEmojiReaction(emoji);
-    });
-  });
 
   // Sidebar tabs
   sidebarTabs.forEach((tab) => {
@@ -1382,11 +1352,6 @@ function showEmojiReaction(emoji, sender) {
   usernameSpan.style.display = "block";
   usernameSpan.style.textAlign = "center";
   usernameSpan.style.marginTop = "5px";
-  usernameSpan.textContent = sender;
-  usernameSpan.style.fontSize = "12px";
-  usernameSpan.style.display = "block";
-  usernameSpan.style.textAlign = "center";
-  usernameSpan.style.marginTop = "5px";
   usernameSpan.style.color = "white";
   usernameSpan.style.textShadow = "0 0 2px rgba(0,0,0,0.5)";
 
@@ -1794,8 +1759,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Hide emoji popup when clicking outside
-  document.addEventListener("click", () => {
-    if (!emojiPopup.classList.contains("hidden")) {
+  document.addEventListener("click", (e) => {
+    if (
+      !emojiPopup.classList.contains("hidden") &&
+      !emojiPopup.contains(e.target) &&
+      e.target !== emojiToggleBtn
+    ) {
       emojiPopup.classList.add("hidden");
     }
   });
@@ -1805,9 +1774,6 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", (e) => {
       const emoji = e.currentTarget.getAttribute("data-emoji");
       sendEmojiReaction(emoji);
-
-      // Hide popup after selection
-      emojiPopup.classList.add("hidden");
     });
   });
 
@@ -1852,8 +1818,4 @@ document.addEventListener("DOMContentLoaded", () => {
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   });
 });
-
-/* Removed this DOMContentLoaded listener to avoid client-side emission of 'sync-video' on join,
-   since the server sends authoritative playback state on join. */
-
 
