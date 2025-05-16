@@ -99,7 +99,7 @@ img {
   color: white;
 }
 
-.logo {
+.logo,.logo-text,.logo-text:hover {
   display: flex;
   align-items: center;
   justify-content: center;
