@@ -3,6 +3,7 @@ let player;
 let localStream;
 let peerConnection;
 let isSyncing = false;
+let playerReady = false;
 let autoPlayEnabled = true;
 let isCallActive = false;
 let videoQueue = [];
@@ -155,7 +156,13 @@ function setupEventListeners() {
   clearQueueBtn.addEventListener("click", () => {
     if (videoQueue.length > 0) {
       if (confirm("Are you sure you want to clear the queue?")) {
-        socket.emit("queue-update", { room, queue: [], currentVideoIndex: -1 });
+        socket.emit("queue-update", {
+          room,
+          queue: videoQueue,
+          currentVideoIndex: index,
+          currentTime: 0,
+          isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
+        });
       }
     }
   });
@@ -404,14 +411,16 @@ function setupSocketListeners() {
     const previousVideoId = videoQueue[currentVideoIndex]?.videoId;
 
     videoQueue = queue;
+    currentVideoIndex = newIndex;
 
-    // If queue is empty, stop player and reset currentVideoIndex
+    const currentVideo = videoQueue[currentVideoIndex];
+    const shouldAutoplay = document.getElementById("autoPlayToggle")?.checked ?? true;
+
+    // If queue is empty
     if (videoQueue.length === 0) {
       currentVideoIndex = -1;
       stopVisualizer();
-      if (player) {
-        player.stopVideo();
-      }
+      if (player) player.stopVideo();
       const ytPlayer = document.getElementById("ytplayer");
       if (ytPlayer) {
         ytPlayer.innerHTML = "";
@@ -421,16 +430,11 @@ function setupSocketListeners() {
       updateNowPlayingInfo(null);
       updateQueueUI();
       return;
-    } else {
-      currentVideoIndex = newIndex;
-      hideVideoOverlay();
     }
 
-    // New check for out-of-bounds currentVideoIndex
+    // Guard for out-of-bounds
     if (currentVideoIndex < 0 || currentVideoIndex >= videoQueue.length) {
-      if (player) {
-        player.stopVideo();
-      }
+      if (player) player.stopVideo();
       stopVisualizer();
       const ytPlayer = document.getElementById("ytplayer");
       if (ytPlayer) {
@@ -443,43 +447,40 @@ function setupSocketListeners() {
       return;
     }
 
+    // Skip reloading if it's the same video and index
+    if (
+      previousIndex === currentVideoIndex &&
+      previousVideoId === currentVideo?.videoId
+    ) {
+      console.log("🔁 Same video already playing — skipping reload");
+      updateQueueUI();
+      updateNowPlayingInfo(currentVideo);
+      return;
+    }
+
+    // Update UI and video info
     updateQueueUI();
-
-    // Update video details
-    const currentVideo = videoQueue[currentVideoIndex];
     updateNowPlayingInfo(currentVideo);
+    hideVideoOverlay();
 
-    // If player exists, load video and sync playback state only if video changed
+    // Player handling
     if (player && currentVideo) {
-      if (previousIndex !== currentVideoIndex || previousVideoId !== currentVideo.videoId) {
-        player.loadVideoById(currentVideo.videoId);
-        player.seekTo(currentTime || 0, true);
-        if (isPlaying) {
-          player.playVideo();
-        } else {
-          player.pauseVideo();
-        }
+      player.loadVideoById(currentVideo.videoId);
+      player.seekTo(currentTime || 0, true);
+      if (isPlaying || shouldAutoplay) {
+        player.playVideo();
       } else {
-        // Same video, just sync play/pause and seek if needed
-        if (isPlaying) {
-          player.playVideo();
-        } else {
-          player.pauseVideo();
-        }
-        if (typeof currentTime === "number") {
-          const playerTime = player.getCurrentTime();
-          if (Math.abs(playerTime - currentTime) > 1) {
-            player.seekTo(currentTime, true);
-          }
-        }
+        player.pauseVideo();
       }
-    } else if (currentVideo) {
-      // If player not initialized, set pending variables to load video and sync state on ready
+    } else if (!player && currentVideo) {
+      // Defer if player not ready
       pendingVideoToLoad = currentVideo.videoId;
       pendingSeekTime = currentTime || 0;
-      pendingAutoplay = isPlaying;
+      pendingAutoplay = isPlaying || shouldAutoplay;
+      createYouTubePlayer(currentVideo.videoId);
     }
   });
+
 
   // Play event
   socket.on("play", ({ username: sender, time }) => {
@@ -826,27 +827,42 @@ function stopProgressUpdater() {
 let youtubeApiReady = false;
 
 // YouTube API functions
-function onYouTubeIframeAPIReady() {
+window.onYouTubeIframeAPIReady = function () {
   youtubeApiReady = true;
-  console.log("YouTube API ready");
 
-  // If there is a pending video to load, create the player now
-  if (pendingVideoToLoad) {
+  if (videoQueue.length > 0 && currentVideoIndex >= 0) {
+    const videoId = videoQueue[currentVideoIndex]?.videoId;
+    if (videoId) {
+      createYouTubePlayer(videoId);
+    }
+  } else if (pendingVideoToLoad) {
     createYouTubePlayer(pendingVideoToLoad);
+  }
+};
+
+
+function ensureYouTubePlayerReady() {
+  if (typeof YT === "undefined" || typeof YT.Player === "undefined") {
+    setTimeout(ensureYouTubePlayerReady, 100);
+  } else {
+    window.onYouTubeIframeAPIReady(); // Manually trigger
   }
 }
 
+// Trigger fallback in case script loads after YouTube API
+document.addEventListener("DOMContentLoaded", () => {
+  ensureYouTubePlayerReady();
+});
+
+
 function createYouTubePlayer(videoId) {
-  if (!youtubeApiReady) {
-    // Delay player creation until API is ready
+  if (!youtubeApiReady || !videoId) {
     pendingVideoToLoad = videoId;
     return;
   }
 
-  if (player) {
-    player.loadVideoById(videoId);
-    return;
-  }
+  const existingPlayer = document.getElementById("ytplayer");
+  if (existingPlayer) existingPlayer.innerHTML = "";
 
   player = new YT.Player("ytplayer", {
     height: "100%",
@@ -854,10 +870,9 @@ function createYouTubePlayer(videoId) {
     videoId: videoId,
     playerVars: {
       autoplay: 1,
-      controls: 0, // We'll use our custom controls
+      controls: 0,
       rel: 0,
-      modestbranding: 1,
-      fs: 1,
+      modestbranding: 0,
     },
     events: {
       onReady: onPlayerReady,
@@ -867,7 +882,9 @@ function createYouTubePlayer(videoId) {
   });
 }
 
+
 function onPlayerReady(event) {
+  playerReady = true;
   event.target.setVolume(volumeSlider.value);
   updateControlButtons();
   startProgressUpdater();
@@ -928,6 +945,8 @@ function onPlayerStateChange(event) {
         room,
         queue: videoQueue,
         currentVideoIndex,
+        currentTime: 0,
+        isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
       });
     }
   }
@@ -944,7 +963,13 @@ function onPlayerError(event) {
   // Skip to next video on error
   if (currentVideoIndex + 1 < videoQueue.length) {
     currentVideoIndex = currentVideoIndex + 1;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
+    socket.emit("queue-update", {
+      room,
+      queue: videoQueue,
+      currentVideoIndex: index,
+      currentTime: 0,
+      isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
+    });
   } else {
     showVideoOverlay();
   }
@@ -968,10 +993,16 @@ function pauseSong() {
 }
 
 function playNext() {
-  if (currentVideoIndex + 1 < videoQueue.length) {
+  if (currentVideoIndex + 1 <= videoQueue.length) {
     currentVideoIndex = currentVideoIndex + 1;
     isLocalQueueUpdate = true;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
+    socket.emit("queue-update", {
+      room,
+      queue: videoQueue,
+      currentVideoIndex,
+      currentTime: 0,
+      isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
+    });
     showNotification(
       "Playback",
       `${username} skipped to next song`,
@@ -991,7 +1022,13 @@ function playPrevious() {
   if (currentVideoIndex - 1 >= 0) {
     currentVideoIndex = currentVideoIndex - 1;
     isLocalQueueUpdate = true;
-    socket.emit("queue-update", { room, queue: videoQueue, currentVideoIndex });
+    socket.emit("queue-update", {
+      room,
+      queue: videoQueue,
+      currentVideoIndex,
+      currentTime: 0,
+      isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
+    });
     showNotification(
       "Playback",
       `${username} went to previous song`,
@@ -1007,32 +1044,25 @@ function playPrevious() {
   }
 }
 
-function playVideoAtIndex(index, autoplay = true) {
-  if (index < 0 || index >= videoQueue.length) return;
+function playVideoAtIndex(index, shouldPlay = true) {
+  const video = videoQueue[index];
+  if (!video) return;
 
-  const newVideoId = videoQueue[index].videoId;
   currentVideoIndex = index;
 
-  // If the same video is being added to the queue, do not restart it
-  if (player && newVideoId === player.getVideoData().video_id) {
-    return; // Avoid restarting the same video
-  }
-
-  if (player) {
-    player.loadVideoById(newVideoId);
-    if (autoplay) {
+  if (player && typeof player.loadVideoById === "function") {
+    player.loadVideoById(video.videoId);
+    if (shouldPlay) {
       player.playVideo();
-    } else {
-      player.pauseVideo();
     }
   } else {
-    pendingAutoplay = autoplay;
-    createYouTubePlayer(newVideoId);
+    // Set autoplay flag so player plays when ready
+    pendingAutoplay = shouldPlay;
+    createYouTubePlayer(video.videoId);
   }
-
+  updateNowPlayingInfo(video);
   updateQueueUI();
   updateControlButtons();
-  updateNowPlayingInfo(videoQueue[index]);
   hideVideoOverlay();
 }
 
@@ -1212,58 +1242,97 @@ function updateQueueUI() {
       </div>
     `;
 
-    // Play this video when clicked
+    // CLICK HANDLER
     queueItem.addEventListener("click", (e) => {
-      if (!e.target.closest(".queue-actions")) {
-        // Update UI immediately
+      const removeBtnClicked = e.target.closest(".remove-btn");
+
+      if (removeBtnClicked) {
+        e.stopPropagation();
+        removeFromQueue(index);
+        return;
+      }
+
+      // Play this video if anything else inside the item is clicked
+      if (queueItem.contains(e.target)) {
         playVideoAtIndex(index, true);
-        // Emit socket event to sync with others
         isLocalQueueUpdate = true;
         socket.emit("queue-update", {
           room,
           queue: videoQueue,
           currentVideoIndex: index,
+          currentTime: 0,
+          isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
         });
-        // Ensure now playing info updates even if index is same
+
         updateNowPlayingInfo(videoQueue[index]);
       }
     });
 
-    // Remove button
-    const removeBtn = queueItem.querySelector(".remove-btn");
-    if (removeBtn) {
-      removeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removeFromQueue(index);
-      });
-    }
-
     queueList.appendChild(queueItem);
+    queueItem.addEventListener("click", (e) => {
+      console.log("Clicked queue item:", video.title);
+      playVideoAtIndex(index, true);
+
+      socket.emit("queue-update", {
+        room,
+        queue: videoQueue,
+        currentVideoIndex: index,
+        currentTime: 0,
+        isPlaying: document.getElementById("autoPlayToggle")?.checked ?? true
+      });
+
+    });
+
   });
 }
 
 function removeFromQueue(index) {
-  const newQueue = [...videoQueue];
-  newQueue.splice(index, 1);
+  if (index < 0 || index >= videoQueue.length) return;
 
-  let newIndex = currentVideoIndex;
+  // Determine if we are deleting the currently playing video
+  const removingCurrent = index === currentVideoIndex;
 
-  // Adjust current index if needed
-  if (newQueue.length === 0) {
-    newIndex = -1;
-  } else if (index === currentVideoIndex) {
-    // If removing current playing video, play the next one or previous if last
-    newIndex = Math.min(index, newQueue.length - 1);
+  // Remove the video
+  videoQueue.splice(index, 1);
+
+  // Adjust currentVideoIndex accordingly
+  if (removingCurrent) {
+    // If queue is now empty
+    if (videoQueue.length === 0) {
+      currentVideoIndex = -1;
+      stopVisualizer();
+      if (player) player.stopVideo();
+      showVideoOverlay();
+      updateNowPlayingInfo(null);
+      updateQueueUI();
+      return socket.emit("queue-update", {
+        room,
+        queue: videoQueue,
+        currentVideoIndex,
+        currentTime: 0,
+        isPlaying: false,
+      });
+    }
+
+    // Play next video if available, otherwise previous one
+    currentVideoIndex = Math.min(index, videoQueue.length - 1);
+    playVideoAtIndex(currentVideoIndex, true);
   } else if (index < currentVideoIndex) {
-    // If removing a video before current, adjust index
-    newIndex--;
+    // If we remove a video before the currently playing one, shift index back
+    currentVideoIndex--;
   }
 
+  // Emit update to sync with others
+  isLocalQueueUpdate = true;
   socket.emit("queue-update", {
     room,
-    queue: newQueue,
-    currentVideoIndex: newIndex,
+    queue: videoQueue,
+    currentVideoIndex,
+    currentTime: player?.getCurrentTime() || 0,
+    isPlaying: player?.getPlayerState() === YT.PlayerState.PLAYING,
   });
+
+  updateQueueUI();
 }
 
 // Chat functions
@@ -1575,12 +1644,11 @@ async function handleIncomingCall(offer) {
 
 function endCall() {
   try {
-    if (peerConnection) {
-      peerConnection.onicecandidate = null;
-      peerConnection.ontrack = null;
-      peerConnection.close();
-      peerConnection = null;
+    for (const id in peerConnections) {
+      peerConnections[id]?.close();
+      delete peerConnections[id];
     }
+
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       localStream = null;

@@ -37,7 +37,7 @@
           <span id="copyConfirmation" style="
               display: inline-block;
               margin-left: 8px;
-              background-color: #4caf50;
+              background-color: rgb(153, 33, 193);
               color: white;
               padding: 2px 6px;
               border-radius: 4px;
@@ -128,14 +128,17 @@
             <i class="fas fa-smile"></i>
           </button>
           <div id="emojiPopup" class="emoji-popup hidden">
+            <button class="emoji-button" data-emoji="😀">😀</button>
+            <button class="emoji-button" data-emoji="😍">😍</button>
+            <button class="emoji-button" data-emoji="😂">😂</button>
+            <button class="emoji-button" data-emoji="😇">😇</button>
+            <button class="emoji-button" data-emoji="🫰">🫰</button>
+            <button class="emoji-button" data-emoji="🔥">🔥</button>
             <button class="emoji-button" data-emoji="👍">👍</button>
             <button class="emoji-button" data-emoji="❤️">❤️</button>
-            <button class="emoji-button" data-emoji="😂">😂</button>
-            <button class="emoji-button" data-emoji="🔥">🔥</button>
             <button class="emoji-button" data-emoji="🎵">🎵</button>
             <button class="emoji-button" data-emoji="🎧">🎧</button>
             <button class="emoji-button" data-emoji="🎸">🎸</button>
-            <button class="emoji-button" data-emoji="👏">👏</button>
           </div>
 
           <div class="playback-controls">
@@ -483,7 +486,6 @@
             visualizer.style.height = '120px';
           }
         } else {
-          // Portrait optimizations
           const visualizer = document.querySelector('.visualizer-container');
           if (visualizer) {
             visualizer.style.height = '80px';
